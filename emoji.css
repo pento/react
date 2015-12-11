@@ -1,0 +1,25 @@
+.emoji-reactions {
+	margin: 20px 0;
+}
+
+.emoji-reaction {
+	width: 60px;
+	border: 1px solid black;
+	cursor: pointer;
+	box-sizing: border-box;
+}
+
+.emoji-reaction:hover {
+	border-color: red;
+}
+
+.emoji-reaction * {
+	width: 100%;
+	text-align: center;
+}
+
+.emoji-reaction .count {
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	background-color: #eee
+}
