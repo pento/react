@@ -1,5 +1,10 @@
 ( function() {
 
+	/**
+	 * Click handler for when a reaction button is clicked
+	 *
+	 * @param  Event event The click event
+	 */
  	var reactionClick = function( event ) {
 		var el;
 
@@ -27,10 +32,20 @@
 		}
 	}
 
+	/**
+	 * Displays the emoji selector
+	 *
+	 * @param  HtmlElement el The button that was clicked
+	 */
 	var showReactionPopup = function( el ) {
 
 	};
 
+	/**
+	 * Send a reaction message back to the server
+	 *
+	 * @param  HtmlElement el The button that was clicked
+	 */
 	var react = function( el ) {
 
 	};

@@ -6,12 +6,20 @@ Version: 0.1
 */
 
 class React {
+	/**
+	 * React constructor.
+	 */
 	function __construct() {
 		$this->enqueue();
 
 		add_filter( 'the_content', array( $this, 'the_content' ) );
 	}
 
+	/**
+	 * Initialises the reactions.
+	 *
+	 * @return React Static instance of the React class.
+	 */
 	static function init() {
 		static $instance;
 
@@ -22,12 +30,20 @@ class React {
 		return $instance;
 	}
 
+	/**
+	 * Enqueue relevant JS and CSS
+	 */
 	function enqueue() {
 		wp_enqueue_style( 'react-emoji', plugins_url( 'emoji.css', __FILE__ ) );
 
 		wp_enqueue_style( 'react-emoji-picker-emoji-picker', plugins_url( 'emoji-picker/lib/js/emoji-picker.js', __FILE__ ), array( 'jquery' ), false, true );
 	}
 
+	/**
+	 * Add the reaction buttons to the post content.
+	 * @param  string $content The content HTML
+	 * @return string The content HTML, with the react buttons attached
+	 */
 	function the_content( $content ) {
 		$post_id = get_the_ID();
 		if ( ! $post_id ) {
