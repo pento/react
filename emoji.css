@@ -2,18 +2,21 @@
 	margin: 20px 0;
 }
 
-.emoji-reaction {
+.emoji-reaction,
+.emoji-reaction-add {
 	width: 60px;
 	border: 1px solid black;
 	cursor: pointer;
 	box-sizing: border-box;
 }
 
-.emoji-reaction:hover {
+.emoji-reaction:hover,
+.emoji-reaction-add:hover {
 	border-color: red;
 }
 
-.emoji-reaction * {
+.emoji-reaction *,
+.emoji-reaction-add * {
 	width: 100%;
 	text-align: center;
 }
