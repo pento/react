@@ -54,7 +54,8 @@ class React {
 			$content .= "<div data-emoji='$emoji' data-count='$count' data-post='$post_id' class='emoji-reaction'><div class='emoji'>$emoji</div><div class='count'>$count</div>";
 		}
 
-		$content .= '<div class="emoji-reaction-add"><div class="emoji">😃+</div></div>';
+		/* translators: This is the emoji used for the "Add new emoji reaction" button */
+		$content .= '<div data-post="$post_id" class="emoji-reaction-add"><div class="emoji">' . __( '😃+', 'react' ) . '</div></div>';
 		$content .= '</div>';
 		return $content;
 	}
