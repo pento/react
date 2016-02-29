@@ -9,26 +9,22 @@
 
 		// Bail early, if we can.
 		if ( 'DIV' !== el.nodeName ) {
-			return true;
+			return;
 		}
 
 		if ( ! node.className || typeof node.className !== 'string' ) {
-			return true;
+			return;
 		}
 
 		if ( node.className.indexOf( 'emoji-reaction-add' ) !== -1 ) {
 			event.preventDefault();
+			event.stopPropagation();
 			showReactionPopup( el );
-			return false;
-		}
-
-		if ( node.className.indexOf( 'emoji-reaction' ) !== -1 ) {
+		} else if ( node.className.indexOf( 'emoji-reaction' ) !== -1 ) {
 			event.preventDefault();
+			event.stopPropagation();
 			react( el );
-			return false;
 		}
-
-		return true;
 	}
 
 	var showReactionPopup = function( el ) {
