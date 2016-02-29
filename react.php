@@ -62,7 +62,6 @@ class React {
 		}
 
 		$content .= '</div>';
-HTML;
 		return $content;
 	}
 }
