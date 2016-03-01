@@ -23,9 +23,12 @@ foreach ( $data as $emoji ) {
 			$category = 100;
 		}
 	}
+	$code = "0x" . $emoji->unified;
+	$code = str_replace( '-', "-0x", $code );
+	$code = explode( '-', $code );
 
 	$map[ $category ][] = array(
-		'code'       => $emoji->unified,
+		'code'       => $code,
 		'sort_order' => $emoji->sort_order,
 	);
 }
