@@ -13,8 +13,9 @@ class React {
 		$this->enqueue();
 
 		add_action( 'wp_head',     array( $this, 'print_settings' ) );
+		add_action( 'wp_footer',   array( $this, 'print_selector' ) );
 
-		add_filter( 'the_content', array( $this, 'the_content'    ) );
+ 		add_filter( 'the_content', array( $this, 'the_content'    ) );
 	}
 
 	/**
@@ -32,6 +33,9 @@ class React {
 		return $instance;
 	}
 
+	/**
+	 * Print the JavaScript settings.
+	 */
 	function print_settings() {
 		?>
 			<script type="text/javascript">
@@ -85,9 +89,34 @@ class React {
 		}
 
 		/* translators: This is the emoji used for the "Add new emoji reaction" button */
-		$content .= '<div data-post="$post_id" class="emoji-reaction-add"><div class="emoji">' . __( '😃+', 'react' ) . '</div></div>';
+		$content .= '<div data-post="$post_id" class="emoji-reaction-add"><div class="emoji">' . __( '😃+', 'reactions' ) . '</div></div>';
 		$content .= '</div>';
 		return $content;
+	}
+
+	function print_selector() {
+		?>
+			<div id="emoji-reaction-selector" style="display: none;">
+				<div class="tabs">
+					<span data-tab="0" alt="<?php echo __( 'People',   'reactions' ); ?>"><?php echo __( '😀', 'reactions' ); ?></span>
+					<span data-tab="1" alt="<?php echo __( 'Nature',   'reactions' ); ?>"><?php echo __( '🌿', 'reactions' ); ?></span>
+					<span data-tab="2" alt="<?php echo __( 'Food',     'reactions' ); ?>"><?php echo __( '🍔', 'reactions' ); ?></span>
+					<span data-tab="3" alt="<?php echo __( 'Activity', 'reactions' ); ?>"><?php echo __( '⚽️', 'reactions' ); ?></span>
+					<span data-tab="4" alt="<?php echo __( 'Places',   'reactions' ); ?>"><?php echo __( '✈️', 'reactions' ); ?></span>
+					<span data-tab="5" alt="<?php echo __( 'Objects',  'reactions' ); ?>"><?php echo __( '💡', 'reactions' ); ?></span>
+					<span data-tab="6" alt="<?php echo __( 'Symbols',  'reactions' ); ?>"><?php echo __( '❤', 'reactions' ); ?></span>
+					<span data-tab="7" alt="<?php echo __( 'Flags',    'reactions' ); ?>"><?php echo __( '🇺🇸', 'reactions' ); ?></span>
+				</div>
+				<div class="container container-0"></div>
+				<div class="container container-1"></div>
+				<div class="container container-2"></div>
+				<div class="container container-3"></div>
+				<div class="container container-4"></div>
+				<div class="container container-5"></div>
+				<div class="container container-6"></div>
+				<div class="container container-7"></div>
+			</div>
+		<?php
 	}
 }
 

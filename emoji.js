@@ -22,6 +22,12 @@
 	var emoji = [];
 
 	/**
+	 * Pointer to the popup element
+	 * @type HtmlElement
+	 */
+	var popup = null;
+
+	/**
 	 * Click handler for when a reaction button is clicked
 	 *
 	 * @param  Event event The click event
@@ -50,6 +56,41 @@
 			event.preventDefault();
 			event.stopPropagation();
 			react( el );
+		}
+	}
+
+	var populateReactionPopup = function() {
+		var ii, jj, tab, html;
+		if ( ! loaded ) {
+			return;
+		}
+
+		if ( ! popup ) {
+			popup = document.getElementById( 'emoji-reaction-selector' );
+		}
+
+		for( ii = 0; ii < 7; ii++ ) {
+			if ( ! emoji[ ii ] ) {
+				continue;
+			}
+
+			tab = popup.getElementsByClassName( 'container-' + ii );
+			if ( 1 !== tab.length ) {
+				continue;
+			}
+			tab = tab[0];
+
+			html = '';
+			for( jj = 0; jj < emoji[ ii ].length; jj++ ) {
+				if ( ! emoji[ ii ][ jj ] ) {
+					continue;
+				}
+
+				html += '&#x' + emoji[ ii ][ jj ] + ';';
+			}
+			html = html.replace( /-/g, ';&#x' );
+
+			tab.innerHTML = html;
 		}
 	}
 
@@ -86,7 +127,8 @@
 				if ( 200 === xhr.status ) {
 					loaded = true;
 					emoji = JSON.parse( xhr.responseText );
-					console.log( emoji );
+
+					populateReactionPopup();
 				}
 			}
 		}
