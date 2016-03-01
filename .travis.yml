@@ -23,3 +23,6 @@ before_script:
 
 script:
   - phpunit
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
