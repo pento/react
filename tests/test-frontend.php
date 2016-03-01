@@ -36,4 +36,15 @@ class React_Test_Frontend extends WP_UnitTestCase {
 
 		$this->assertEquals( 1, preg_match( '/<div [^>]*class="emoji-reaction-add"/', $content ) );
 	}
+
+	/**
+	 * Test that React::the_content() doesn't change the content when not in the loop.
+	 */
+	function test_content_not_changed_outside_loop() {
+		$react = React::init();
+
+		$content ='foo';
+
+		$this->assertEquals( $content, $react->the_content( $content ) );
+	}
 }
