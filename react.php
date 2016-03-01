@@ -36,7 +36,7 @@ class React {
 	function enqueue() {
 		wp_enqueue_style( 'react-emoji', plugins_url( 'emoji.css', __FILE__ ) );
 
-		wp_enqueue_style( 'react-emoji-picker-emoji-picker', plugins_url( 'emoji-picker/lib/js/emoji-picker.js', __FILE__ ), array( 'jquery' ), false, true );
+		wp_enqueue_script( 'react-emoji', plugins_url( 'emoji.js', __FILE__ ), array(), false, true );
 	}
 
 	/**
