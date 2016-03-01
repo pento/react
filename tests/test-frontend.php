@@ -47,4 +47,31 @@ class React_Test_Frontend extends WP_UnitTestCase {
 
 		$this->assertEquals( $content, $react->the_content( $content ) );
 	}
+
+	/**
+	 * Test that the emoji.json URL is passed.
+	 */
+	function test_json_url_is_passed() {
+		$post_id = $this->factory->post->create();
+
+		$this->go_to( get_permalink( $post_id ) );
+
+		ob_start();
+		wp_head();
+		$head = ob_get_clean();
+
+		$this->assertEquals( 1, preg_match( "/emoji_url: '[^']*emoji.json'/", $head ) );
+	}
+
+	function test_selector_in_footer() {
+		$post_id = $this->factory->post->create();
+
+		$this->go_to( get_permalink( $post_id ) );
+
+		ob_start();
+		wp_footer();
+		$footer = ob_get_clean();
+
+		$this->assertGreaterThanOrEqual( 0, strpos( '<div class="emoji-reaction-selector"', $footer ) );
+	}
 }
