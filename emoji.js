@@ -86,9 +86,8 @@
 					continue;
 				}
 
-				html += '&#x' + emoji[ ii ][ jj ] + ';';
+				html += '&#x' + emoji[ ii ][ jj ].replace( /-/g, ';&#x' ) + ';';
 			}
-			html = html.replace( /-/g, ';&#x' );
 
 			tab.innerHTML = html;
 		}
