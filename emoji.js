@@ -60,7 +60,7 @@
 	}
 
 	var populateReactionPopup = function() {
-		var ii, jj, tab, html;
+		var ii, jj, tab, html, character;
 		if ( ! loaded ) {
 			return;
 		}
@@ -86,7 +86,11 @@
 					continue;
 				}
 
-				html += String.fromCodePoint.apply( this, emoji[ ii ][ jj ] );
+				character = String.fromCodePoint.apply( this, emoji[ ii ][ jj ] );
+
+				html += '<div data-emoji="' + character + '" class="emoji-reaction"><div class="emoji">';
+				html += character;
+				html += '</div></div>';
 			}
 
 			tab.innerHTML = html;
@@ -99,7 +103,8 @@
 	 * @param  HtmlElement el The button that was clicked
 	 */
 	var showReactionPopup = function( el ) {
-
+		popup.dataset.post_id = el.dataset.post_id;
+		popup.style.display = "block;"
 	};
 
 	/**
@@ -108,7 +113,12 @@
 	 * @param  HtmlElement el The button that was clicked
 	 */
 	var react = function( el ) {
-
+		var post_id;
+		if ( el.dataset.post_id ) {
+			post_id = el.dataset.post_id;
+		} else {
+			post_id = el.parentElement.parentElement.dataset.post_id;
+		}
 	};
 
 	/**
