@@ -1,4 +1,4 @@
-# oEmbed API #
+# Reactions #
 Contributors:      pento	
 Tags:              emoji, reactions, comments	
 Requires at least: 4.2	
