@@ -9,7 +9,7 @@ class React {
 	/**
 	 * React constructor.
 	 */
-	function __construct() {
+	public function __construct() {
 		$this->enqueue();
 
 		add_action( 'wp_head',     array( $this, 'print_settings' ) );
@@ -23,7 +23,7 @@ class React {
 	 *
 	 * @return React Static instance of the React class.
 	 */
-	static function init() {
+	public static function init() {
 		static $instance;
 
 		if ( ! $instance ) {
@@ -36,7 +36,7 @@ class React {
 	/**
 	 * Print the JavaScript settings.
 	 */
-	function print_settings() {
+	public function print_settings() {
 		?>
 			<script type="text/javascript">
 				window.wp = window.wp || {};
@@ -51,7 +51,7 @@ class React {
 	/**
 	 * Enqueue relevant JS and CSS
 	 */
-	function enqueue() {
+	public function enqueue() {
 		wp_enqueue_style( 'react-emoji', plugins_url( 'emoji.css', __FILE__ ) );
 
 		wp_enqueue_script( 'react-emoji', plugins_url( 'emoji.js', __FILE__ ), array(), false, true );
@@ -62,7 +62,7 @@ class React {
 	 * @param  string $content The content HTML
 	 * @return string The content HTML, with the react buttons attached
 	 */
-	function the_content( $content ) {
+	public function the_content( $content ) {
 		$post_id = get_the_ID();
 		if ( ! $post_id ) {
 			return $content;
@@ -94,7 +94,7 @@ class React {
 		return $content;
 	}
 
-	function print_selector() {
+	public function print_selector() {
 		?>
 			<div id="emoji-reaction-selector" style="display: none;">
 				<div class="tabs">
