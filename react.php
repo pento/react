@@ -12,7 +12,9 @@ class React {
 	function __construct() {
 		$this->enqueue();
 
-		add_filter( 'the_content', array( $this, 'the_content' ) );
+		add_action( 'wp_head',     array( $this, 'print_settings' ) );
+
+		add_filter( 'the_content', array( $this, 'the_content'    ) );
 	}
 
 	/**
@@ -28,6 +30,18 @@ class React {
 		}
 
 		return $instance;
+	}
+
+	function print_settings() {
+		?>
+			<script type="text/javascript">
+				window.wp = window.wp || {};
+				window.wp.react = window.wp.react || {};
+				window.wp.react.settings = {
+					emoji_url: '<?php echo plugins_url( 'emoji.json', __FILE__ ) ?>'
+				}
+			</script>
+		<?php
 	}
 
 	/**
