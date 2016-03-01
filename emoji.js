@@ -44,15 +44,15 @@
 			return;
 		}
 
-		if ( ! node.className || typeof node.className !== 'string' ) {
+		if ( ! el.className || typeof el.className !== 'string' ) {
 			return;
 		}
 
-		if ( node.className.indexOf( 'emoji-reaction-add' ) !== -1 ) {
+		if ( el.className.indexOf( 'emoji-reaction-add' ) !== -1 ) {
 			event.preventDefault();
 			event.stopPropagation();
 			showReactionPopup( el );
-		} else if ( node.className.indexOf( 'emoji-reaction' ) !== -1 ) {
+		} else if ( el.className.indexOf( 'emoji-reaction' ) !== -1 ) {
 			event.preventDefault();
 			event.stopPropagation();
 			react( el );
