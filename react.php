@@ -52,9 +52,9 @@ class React {
 	 * Enqueue relevant JS and CSS
 	 */
 	public function enqueue() {
-		wp_enqueue_style( 'react-emoji', plugins_url( 'emoji.css', __FILE__ ) );
+		wp_enqueue_style( 'react-emoji', plugins_url( 'react.css', __FILE__ ) );
 
-		wp_enqueue_script( 'react-emoji', plugins_url( 'emoji.js', __FILE__ ), array(), false, true );
+		wp_enqueue_script( 'react-emoji', plugins_url( 'react.js', __FILE__ ), array(), false, true );
 	}
 
 	/**
