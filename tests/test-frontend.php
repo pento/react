@@ -34,7 +34,7 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		the_content();
 		$content = ob_get_clean();
 
-		$this->assertEquals( 1, preg_match( '/<div [^>]*class="emoji-reaction-add"/', $content ) );
+		$this->assertEquals( 1, preg_match( "/<div [^>]*class='emoji-reaction-add'/", $content ) );
 	}
 
 	/**
