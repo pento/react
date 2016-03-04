@@ -17,3 +17,16 @@ function _manually_load_react_plugin() {
 tests_add_filter( 'muplugins_loaded', '_manually_load_react_plugin' );
 
 require $_tests_dir . '/includes/bootstrap.php';
+
+// Helper classes
+if ( ! class_exists( 'WP_Test_REST_TestCase' ) ) {
+	require_once dirname( __FILE__ ) . '/class-wp-test-rest-testcase.php';
+}
+
+if ( ! class_exists( 'WP_Test_REST_Controller_Testcase' ) ) {
+	require_once dirname( __FILE__ ) . '/class-wp-test-rest-controller-testcase.php';
+}
+
+if ( ! class_exists( 'WP_Test_Spy_REST_Server' ) ) {
+	require_once dirname( __FILE__ ) . '/class-wp-test-spy-rest-server.php';
+}

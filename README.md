@@ -1,7 +1,7 @@
 # Reactions #
 Contributors:      pento	
 Tags:              emoji, reactions, comments	
-Requires at least: 4.2	
+Requires at least: 4.4	
 Tested up to:      4.5-trunk	
 Stable tag:        trunk	
 License:           GPLv2 or later	

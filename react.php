@@ -5,17 +5,30 @@ Description: 💩 Reactions.
 Version: 0.1
 */
 
+require_once dirname( __FILE__ ) . '/lib/class-wp-rest-react-controller.php';
+
 class React {
+
+	/**
+	 * API endpoints
+	 * @var WP_REST_React_Controller
+	 */
+	public $api;
+
 	/**
 	 * React constructor.
 	 */
 	public function __construct() {
+		$this->api = new WP_REST_React_Controller();
+
 		$this->enqueue();
 
-		add_action( 'wp_head',     array( $this, 'print_settings' ) );
-		add_action( 'wp_footer',   array( $this, 'print_selector' ) );
+ 		add_action( 'rest_api_init', array( $this->api, 'register_routes' ) );
 
- 		add_filter( 'the_content', array( $this, 'the_content'    ) );
+		add_action( 'wp_head',       array( $this,      'print_settings'  ) );
+		add_action( 'wp_footer',     array( $this,      'print_selector'  ) );
+
+ 		add_filter( 'the_content',   array( $this,      'the_content'     ) );
 	}
 
 	/**
