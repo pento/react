@@ -5,6 +5,20 @@
  */
 class WP_REST_React_Controller {
 	/**
+	 * The namespace of this controller's route.
+	 *
+	 * @var string
+	 */
+	protected $namespace;
+
+	/**
+	 * The base of this controller's route.
+	 *
+	 * @var string
+	 */
+	protected $rest_base;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -132,6 +146,48 @@ class WP_REST_React_Controller {
 	public function create_item( $request ) {
 	}
 
+/**
+	 * Check if we can read a post.
+	 *
+	 * Correctly handles posts with the inherit status.
+	 *
+	 * @param object $post Post object.
+	 * @return boolean Can we read it?
+	 */
+	public function check_read_post_permission( $post ) {
+		if ( ! empty( $post->post_password ) && ! $this->check_update_permission( $post ) ) {
+			return false;
+		}
+
+		$post_type = get_post_type_object( $post->post_type );
+		if ( ! $this->check_is_post_type_allowed( $post_type ) ) {
+			return false;
+		}
+
+		// Can we read the post?
+		if ( 'publish' === $post->post_status || current_user_can( $post_type->cap->read_post, $post->ID ) ) {
+			return true;
+		}
+
+		$post_status_obj = get_post_status_object( $post->post_status );
+		if ( $post_status_obj && $post_status_obj->public ) {
+			return true;
+		}
+
+		// Can we read the parent if we're inheriting?
+		if ( 'inherit' === $post->post_status && $post->post_parent > 0 ) {
+			$parent = get_post( $post->post_parent );
+			return $this->check_read_permission( $parent );
+		}
+
+		// If we don't have a parent, but the status is set to inherit, assume
+		// it's published (as per get_post_status()).
+		if ( 'inherit' === $post->post_status ) {
+			return true;
+		}
+
+		return false;
+	}
 	/**
 	 * Prepare a reaction group output for response.
 	 *
@@ -164,15 +220,35 @@ class WP_REST_React_Controller {
 	}
 
 	/**
+	 * Prepare a response for inserting into a collection.
+	 *
+	 * @param WP_REST_Response $response Response object.
+	 * @return array Response data, ready for insertion into collection data.
+	 */
+	public function prepare_response_for_collection( $response ) {
+		if ( ! ( $response instanceof WP_REST_Response ) ) {
+			return $response;
+		}
+
+		$data = (array) $response->get_data();
+		$links = WP_REST_Server::get_response_links( $response );
+		if ( ! empty( $links ) ) {
+			$data['_links'] = $links;
+		}
+
+		return $data;
+	}
+
+	/**
 	 * Prepare links for the request.
 	 *
-	 * @param array $comment Reaction.
+	 * @param array $reaction Reaction.
 	 * @return array Links for the given reaction.
 	 */
 	protected function prepare_links( $reaction ) {
 		$links = array(
 			'self' => array(
-				'href' => rest_url( sprintf( '/%s/%s/%s', $this->namespace, $this->rest_base, $comment->emoji ) ),
+				'href' => rest_url( sprintf( '/%s/%s/%s', $this->namespace, $this->rest_base, $reaction->emoji ) ),
 			),
 			'collection' => array(
 				'href' => rest_url( sprintf( '/%s/%s', $this->namespace, $this->rest_base ) ),
