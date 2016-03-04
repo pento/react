@@ -23,9 +23,17 @@
 
 	/**
 	 * Pointer to the popup element
+	 *
 	 * @type HtmlElement
 	 */
 	var popup = null;
+
+	/**
+	 * Flag to show if the popup has been populated already.
+	 *
+	 * @type bool
+	 */
+	var popupPopulated = false;
 
 	/**
 	 * Click handler for when a reaction button is clicked
@@ -33,29 +41,32 @@
 	 * @param  Event event The click event
 	 */
  	var reactionClick = function( event ) {
-		var el;
+		var el, parent;
 
 		event = event || window.event;
 
 		el = event.target || event.srcElement;
 
-		// Bail early, if we can.
-		if ( 'DIV' !== el.nodeName ) {
+		parent = el;
+		while ( parent ) {
+			if ( 'DIV' === parent.nodeName && parent.className && typeof parent.className === 'string' && parent.className.indexOf( 'emoji-reaction' ) !== -1 ) {
+				break;
+			}
+			parent = parent.parentElement;
+		}
+
+		if ( ! parent ) {
 			return;
 		}
 
-		if ( ! el.className || typeof el.className !== 'string' ) {
-			return;
-		}
-
-		if ( el.className.indexOf( 'emoji-reaction-add' ) !== -1 ) {
+		if ( parent.className.indexOf( 'emoji-reaction-add' ) !== -1 ) {
 			event.preventDefault();
 			event.stopPropagation();
-			showReactionPopup( el );
-		} else if ( el.className.indexOf( 'emoji-reaction' ) !== -1 ) {
+			showReactionPopup( parent );
+		} else if ( parent.className.indexOf( 'emoji-reaction' ) !== -1 ) {
 			event.preventDefault();
 			event.stopPropagation();
-			react( el );
+			react( parent );
 		}
 	}
 
@@ -65,11 +76,17 @@
 			return;
 		}
 
+		if ( popupPopulated ) {
+			return;
+		}
+
+		popupPopulated = true;
+
 		if ( ! popup ) {
 			popup = document.getElementById( 'emoji-reaction-selector' );
 		}
 
-		for( ii = 0; ii < 7; ii++ ) {
+		for( ii = 0; ii <= 7; ii++ ) {
 			if ( ! emoji[ ii ] ) {
 				continue;
 			}
@@ -103,8 +120,42 @@
 	 * @param  HtmlElement el The button that was clicked
 	 */
 	var showReactionPopup = function( el ) {
-		popup.dataset.post_id = el.dataset.post_id;
-		popup.style.display = "block;"
+		var left = 0, top = 0,
+			parent;
+
+		populateReactionPopup();
+
+		popup.dataset.post = el.dataset.post;
+
+		parent = el;
+
+		while ( parent ) {
+			left += parent.offsetLeft;
+			top += parent.offsetTop;
+			parent = parent.offsetParent;
+		}
+
+		top -= 300;
+
+		popup.style.left = left + 'px';
+		popup.style.top = top + 'px';
+
+		for( ii = 1; ii <= 7; ii++ ) {
+			if ( ! emoji[ ii ] ) {
+				continue;
+			}
+
+			tab = popup.getElementsByClassName( 'container-' + ii );
+			if ( 1 !== tab.length ) {
+				continue;
+			}
+			tab = tab[0];
+
+			tab.style.display = 'none';
+		}
+
+
+		popup.style.display = "block";
 	};
 
 	/**
@@ -136,8 +187,6 @@
 				if ( 200 === xhr.status ) {
 					loaded = true;
 					emoji = JSON.parse( xhr.responseText );
-
-					populateReactionPopup();
 				}
 			}
 		}

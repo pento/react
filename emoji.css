@@ -26,3 +26,36 @@
 	font-size: 14px;
 	background-color: #eee
 }
+
+#emoji-reaction-selector {
+	position: absolute;
+	width: 300px;
+	height: 300px;
+}
+
+#emoji-reaction-selector .tabs {
+	width: 100%;
+	height: 30px;
+	background-color: #aaa;
+	white-space: collapse;
+}
+
+#emoji-reaction-selector .tabs div {
+	float: left;
+	border: 1px solid black;
+}
+
+#emoji-reaction-selector .tabs div:hover {
+	background-color: #ddd
+}
+
+#emoji-reaction-selector .container {
+	width: 100%;
+	height: 270px;
+	overflow-y: scroll;
+	background-color: #ddd;
+}
+
+#emoji-reaction-selector .emoji-reaction {
+	float: left;
+}
