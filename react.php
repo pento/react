@@ -98,7 +98,7 @@ class React {
 		$content .= '<div class="emoji-reactions">';
 
 		foreach ( $reactions_summary as $emoji => $count ) {
-			$content .= "<div data-emoji='$emoji' data-count='$count' data-post='$post_id' class='emoji-reaction'><div class='emoji'>$emoji</div><div class='count'>$count</div>";
+			$content .= "<div data-emoji='$emoji' data-count='$count' data-post='$post_id' class='emoji-reaction'><div class='emoji'>$emoji</div><div class='count'>$count</div></div>";
 		}
 
 		/* translators: This is the emoji used for the "Add new emoji reaction" button */
