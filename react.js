@@ -56,13 +56,18 @@
 		}
 
 		if ( ! parent ) {
+			hideReactionPopup();
 			return;
 		}
 
 		if ( parent.className.indexOf( 'emoji-reaction-add' ) !== -1 ) {
 			event.preventDefault();
 			event.stopPropagation();
-			showReactionPopup( parent );
+			if ( ! popup || 'none' === popup.style.display ) {
+				showReactionPopup( parent );
+			} else {
+				hideReactionPopup();
+			}
 		} else if ( parent.className.indexOf( 'emoji-reaction-tab' ) !== -1 ) {
 			event.preventDefault();
 			event.stopPropagation();
@@ -71,9 +76,13 @@
 			event.preventDefault();
 			event.stopPropagation();
 			react( parent );
+			hideReactionPopup();
 		}
 	}
 
+	/**
+	 * Add the emoji list to the reaction popup.
+	 */
 	var populateReactionPopup = function() {
 		var ii, jj, tab, html, character;
 		if ( ! loaded ) {
@@ -149,6 +158,18 @@
 		popup.style.display = "block";
 	};
 
+	/**
+	 * Hide the reaction popup.
+	 */
+	var hideReactionPopup = function() {
+		popup.style.display = "none";
+	}
+
+	/**
+	 * Switch to a different tab in the reactions popup.
+	 *
+	 * @param  int tab_number The tab number to switch to.
+	 */
 	var changeReactionTab = function( tab_number ) {
 		for( ii = 0; ii <= 7; ii++ ) {
 			tab = popup.getElementsByClassName( 'container-' + ii );
