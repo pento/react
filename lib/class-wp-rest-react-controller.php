@@ -146,7 +146,7 @@ class WP_REST_React_Controller {
 	public function create_item( $request ) {
 	}
 
-/**
+	/**
 	 * Check if we can read a post.
 	 *
 	 * Correctly handles posts with the inherit status.
@@ -155,7 +155,7 @@ class WP_REST_React_Controller {
 	 * @return boolean Can we read it?
 	 */
 	public function check_read_post_permission( $post ) {
-		if ( ! empty( $post->post_password ) && ! $this->check_update_permission( $post ) ) {
+		if ( ! empty( $post->post_password ) && ! $this->check_update_post_permission( $post ) ) {
 			return false;
 		}
 
@@ -177,7 +177,7 @@ class WP_REST_React_Controller {
 		// Can we read the parent if we're inheriting?
 		if ( 'inherit' === $post->post_status && $post->post_parent > 0 ) {
 			$parent = get_post( $post->post_parent );
-			return $this->check_read_permission( $parent );
+			return $this->check_read_post_permission( $parent );
 		}
 
 		// If we don't have a parent, but the status is set to inherit, assume
@@ -188,6 +188,41 @@ class WP_REST_React_Controller {
 
 		return false;
 	}
+
+	/**
+	 * Check if we can edit a post.
+	 *
+	 * @param object $post Post object.
+	 * @return boolean Can we edit it?
+	 */
+	protected function check_update_post_permission( $post ) {
+		$post_type = get_post_type_object( $post->post_type );
+
+		if ( ! $this->check_is_post_type_allowed( $post_type ) ) {
+			return false;
+		}
+
+		return current_user_can( $post_type->cap->edit_post, $post->ID );
+	}
+
+	/**
+	 * Check if a given post type should be viewed or managed.
+	 *
+	 * @param object|string $post_type
+	 * @return boolean Is post type allowed?
+	 */
+	protected function check_is_post_type_allowed( $post_type ) {
+		if ( ! is_object( $post_type ) ) {
+			$post_type = get_post_type_object( $post_type );
+		}
+
+		if ( ! empty( $post_type ) && ! empty( $post_type->show_in_rest ) ) {
+			return true;
+		}
+
+		return false;
+	}
+
 	/**
 	 * Prepare a reaction group output for response.
 	 *
