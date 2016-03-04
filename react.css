@@ -5,6 +5,7 @@
 .emoji-reaction,
 .emoji-reaction-add {
 	width: 60px;
+	float: left;
 	border: 1px solid black;
 	cursor: pointer;
 	box-sizing: border-box;
@@ -57,5 +58,5 @@
 }
 
 #emoji-reaction-selector .emoji-reaction {
-	float: left;
+	width: 30px;
 }

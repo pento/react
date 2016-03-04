@@ -63,6 +63,10 @@
 			event.preventDefault();
 			event.stopPropagation();
 			showReactionPopup( parent );
+		} else if ( parent.className.indexOf( 'emoji-reaction-tab' ) !== -1 ) {
+			event.preventDefault();
+			event.stopPropagation();
+			changeReactionTab( parent.dataset.tab );
 		} else if ( parent.className.indexOf( 'emoji-reaction' ) !== -1 ) {
 			event.preventDefault();
 			event.stopPropagation();
@@ -140,23 +144,26 @@
 		popup.style.left = left + 'px';
 		popup.style.top = top + 'px';
 
-		for( ii = 1; ii <= 7; ii++ ) {
-			if ( ! emoji[ ii ] ) {
-				continue;
-			}
+		changeReactionTab( 0 );
 
+		popup.style.display = "block";
+	};
+
+	var changeReactionTab = function( tab_number ) {
+		for( ii = 0; ii <= 7; ii++ ) {
 			tab = popup.getElementsByClassName( 'container-' + ii );
 			if ( 1 !== tab.length ) {
 				continue;
 			}
 			tab = tab[0];
 
-			tab.style.display = 'none';
+			if ( ii == tab_number ) {
+				tab.style.display = 'block';
+			} else {
+				tab.style.display = 'none';
+			}
 		}
-
-
-		popup.style.display = "block";
-	};
+	}
 
 	/**
 	 * Send a reaction message back to the server
