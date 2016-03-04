@@ -18,6 +18,7 @@
 		</blacklist>
 		<whitelist>
 			<file>./react.php</file>
+			<directory suffix=".php">./lib</directory>
 		</whitelist>
 	</filter>
 </phpunit>
