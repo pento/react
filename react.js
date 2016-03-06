@@ -162,7 +162,9 @@
 	 * Hide the reaction popup.
 	 */
 	var hideReactionPopup = function() {
-		popup.style.display = "none";
+		if ( popup && 'none' !== popup.style.display ) {
+			popup.style.display = "none";
+		}
 	}
 
 	/**
