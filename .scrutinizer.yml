@@ -37,7 +37,8 @@ tools:
     path_configs: {  }
 
     php_code_sniffer:
-        config: { standard: WordPress }
+        config:
+          standard: 'WordPress'
 
 before_commands: {  }
 after_commands: {  }
