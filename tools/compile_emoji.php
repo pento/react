@@ -2,7 +2,7 @@
 // Compile emoji data list into an autocompleteable list
 
 $contents = file_get_contents( 'https://raw.githubusercontent.com/iamcal/emoji-data/master/emoji.json' );
-file_put_contents( dirname( __DIR__ ) . '/emoji-raw.json', $contents );
+file_put_contents( dirname( __DIR__ ) . '/static/emoji-raw.json', $contents );
 
 $data = json_decode( $contents );
 $map = array();
@@ -49,4 +49,4 @@ foreach ( $map as $category => $emoji_list ) {
 	}
 }
 
-file_put_contents( dirname( __DIR__ ) . '/emoji.json', json_encode( $map ) );
+file_put_contents( dirname( __DIR__ ) . '/static/emoji.json', json_encode( $map ) );

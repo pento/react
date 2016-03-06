@@ -56,7 +56,7 @@ class React {
 				window.wp = window.wp || {};
 				window.wp.react = window.wp.react || {};
 				window.wp.react.settings = {
-					emoji_url: '<?php echo REACT_URL . '/emoji.json' ?>'
+					emoji_url: '<?php echo REACT_URL . '/static/emoji.json' ?>'
 				}
 			</script>
 		<?php
@@ -66,9 +66,9 @@ class React {
 	 * Enqueue relevant JS and CSS
 	 */
 	public function enqueue() {
-		wp_enqueue_style( 'react-emoji', REACT_URL . '/react.css' );
+		wp_enqueue_style( 'react-emoji', REACT_URL . '/static/react.css' );
 
-		wp_enqueue_script( 'react-emoji', REACT_URL . '/react.js', array(), false, true );
+		wp_enqueue_script( 'react-emoji', REACT_URL . '/static/react.js', array(), false, true );
 	}
 
 	/**
