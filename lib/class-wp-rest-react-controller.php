@@ -155,72 +155,9 @@ class WP_REST_React_Controller {
 	 * @return boolean Can we read it?
 	 */
 	public function check_read_post_permission( $post ) {
-		if ( ! empty( $post->post_password ) && ! $this->check_update_post_permission( $post ) ) {
-			return false;
-		}
+		$posts_controller = new WP_REST_Posts_Controller( $post->post_type );
 
-		$post_type = get_post_type_object( $post->post_type );
-		if ( ! $this->check_is_post_type_allowed( $post_type ) ) {
-			return false;
-		}
-
-		// Can we read the post?
-		if ( 'publish' === $post->post_status || current_user_can( $post_type->cap->read_post, $post->ID ) ) {
-			return true;
-		}
-
-		$post_status_obj = get_post_status_object( $post->post_status );
-		if ( $post_status_obj && $post_status_obj->public ) {
-			return true;
-		}
-
-		// Can we read the parent if we're inheriting?
-		if ( 'inherit' === $post->post_status && $post->post_parent > 0 ) {
-			$parent = get_post( $post->post_parent );
-			return $this->check_read_post_permission( $parent );
-		}
-
-		// If we don't have a parent, but the status is set to inherit, assume
-		// it's published (as per get_post_status()).
-		if ( 'inherit' === $post->post_status ) {
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Check if we can edit a post.
-	 *
-	 * @param object $post Post object.
-	 * @return boolean Can we edit it?
-	 */
-	protected function check_update_post_permission( $post ) {
-		$post_type = get_post_type_object( $post->post_type );
-
-		if ( ! $this->check_is_post_type_allowed( $post_type ) ) {
-			return false;
-		}
-
-		return current_user_can( $post_type->cap->edit_post, $post->ID );
-	}
-
-	/**
-	 * Check if a given post type should be viewed or managed.
-	 *
-	 * @param object|string $post_type
-	 * @return boolean Is post type allowed?
-	 */
-	protected function check_is_post_type_allowed( $post_type ) {
-		if ( ! is_object( $post_type ) ) {
-			$post_type = get_post_type_object( $post_type );
-		}
-
-		if ( ! empty( $post_type ) && ! empty( $post_type->show_in_rest ) ) {
-			return true;
-		}
-
-		return false;
+		return $posts_controller->check_read_permission( $post );
 	}
 
 	/**

@@ -18,9 +18,13 @@ class React {
 	public function __construct() {
 		$this->api = new WP_REST_React_Controller();
 
-		$this->enqueue();
-
  		add_action( 'rest_api_init', array( $this->api, 'register_routes' ) );
+
+ 		if ( is_admin() ) {
+ 			return;
+ 		}
+
+		$this->enqueue();
 
 		add_action( 'wp_head',       array( $this,      'print_settings'  ) );
 		add_action( 'wp_footer',     array( $this,      'print_selector'  ) );
