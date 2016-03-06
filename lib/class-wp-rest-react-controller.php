@@ -94,7 +94,7 @@ class WP_REST_React_Controller {
 		$query_result = $query->query( $prepared_args );
 
 		$reactions_count = array();
-		foreach( $query_result as $reaction ) {
+		foreach ( $query_result as $reaction ) {
 			if ( empty( $reactions_count[ $reaction->comment_content ] ) ) {
 				$reactions_count[ $reaction->comment_content ] = array(
 					'count'   => 0,
@@ -106,7 +106,7 @@ class WP_REST_React_Controller {
 		}
 
 		$reactions = array();
-		foreach( $reactions_count as $emoji => $data ) {
+		foreach ( $reactions_count as $emoji => $data ) {
 			$reaction = array(
 				'emoji'   => $emoji,
 				'count'   => $data['count'],

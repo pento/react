@@ -155,7 +155,7 @@
 
 		changeReactionTab( 0 );
 
-		popup.style.display = "block";
+		popup.style.display = 'block';
 	};
 
 	/**
@@ -163,7 +163,7 @@
 	 */
 	var hideReactionPopup = function() {
 		if ( popup && 'none' !== popup.style.display ) {
-			popup.style.display = "none";
+			popup.style.display = 'none';
 		}
 	}
 
@@ -242,9 +242,9 @@
 	}
 
 	if ( document.addEventListener ) {
-		document.addEventListener( "click", reactionClick );
+		document.addEventListener( 'click', reactionClick );
 	} else {
-		document.attachEvent( "click", reactionClick );
+		document.attachEvent( 'click', reactionClick );
 	}
 
 } )( window, document, window.wp.react.settings );

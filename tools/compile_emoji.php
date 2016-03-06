@@ -35,7 +35,7 @@ foreach ( $data as $emoji ) {
 
 ksort( $map );
 
-foreach( $map as $category => $emoji_list ) {
+foreach ( $map as $category => $emoji_list ) {
 	usort( $map[ $category ], function( $a, $b ) {
 		if ( $a['sort_order'] == $b['sort_order'] ) {
 			return 0;
@@ -44,7 +44,7 @@ foreach( $map as $category => $emoji_list ) {
 		return ( $a['sort_order'] < $b['sort_order'] ) ? -1 : 1;
 	} );
 
-	foreach( $map[ $category ] as $id => $emoji ) {
+	foreach ( $map[ $category ] as $id => $emoji ) {
 		$map[ $category ][ $id ] = $emoji['code'];
 	}
 }

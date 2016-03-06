@@ -87,7 +87,7 @@ class React {
 		) );
 
 		$reactions_summary = array();
-		foreach( $reactions as $reaction ) {
+		foreach ( $reactions as $reaction ) {
 			if ( ! isset( $reactions_summary[ $reaction->comment_content ] ) ) {
 				$reactions_summary[ $reaction->comment_content ] = 0;
 			}
