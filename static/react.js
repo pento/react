@@ -140,18 +140,20 @@
 
 		popup.dataset.post = el.dataset.post;
 
-		parent = el;
+		if ( document.documentElement.clientWidth > 768 ) {
+			parent = el;
 
-		while ( parent ) {
-			left += parent.offsetLeft;
-			top += parent.offsetTop;
-			parent = parent.offsetParent;
+			while ( parent ) {
+				left += parent.offsetLeft;
+				top += parent.offsetTop;
+				parent = parent.offsetParent;
+			}
+
+			top -= 300;
+
+			popup.style.left = left + 'px';
+			popup.style.top = top + 'px';
 		}
-
-		top -= 300;
-
-		popup.style.left = left + 'px';
-		popup.style.top = top + 'px';
 
 		changeReactionTab( 0 );
 

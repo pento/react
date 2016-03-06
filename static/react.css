@@ -52,11 +52,53 @@
 
 #emoji-reaction-selector .container {
 	width: 100%;
-	height: 270px;
+	height: 100%;
 	overflow-y: scroll;
 	background-color: #ddd;
 }
 
 #emoji-reaction-selector .emoji-reaction {
 	width: 30px;
+}
+
+@media only screen and ( max-width: 768px ) {
+	#emoji-reaction-selector {
+		position: fixed;
+		width: 100%;
+		height: 33%;
+		left: 0px;
+		bottom: 0px;
+	}
+
+	#emoji-reaction-selector .tabs {
+		height: 50px;
+	}
+
+	#emoji-reaction-selector .emoji-reaction,
+	#emoji-reaction-selector .emoji-reaction-tab {
+		width: 50px;
+		height: 50px;
+	}
+
+	#emoji-reaction-selector .emoji {
+		width: 100%;
+		height: 100%;
+	}
+
+	#emoji-reaction-selector .emoji img,
+	#emoji-reaction-selector .tabs .emoji {
+		width: 70% !important;
+		height: 70% !important;
+		margin-top: 15% !important;
+	}
+
+	#emoji-reaction-selector .tabs .emoji {
+		margin-left: 15% !important;
+	}
+}
+
+@media only screen and ( max-width: 480px ) {
+	#emoji-reaction-selector {
+		height: 50%;
+	}
 }
