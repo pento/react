@@ -19,7 +19,10 @@ env:
 
 # Clones WordPress and configures our testing environment.
 before_script:
+  - phpenv local 5.5
   - composer install --no-interaction
+  - phpenv local --unset
+
   - bash bin/install-wp-tests.sh wordpress_test root '' 127.0.0.1 $WP_VERSION
 
 script:
