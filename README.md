@@ -17,6 +17,8 @@ x1f4a9 reactions.
 
 💩 reactions.
 
+It's what you've always dreamed of.
+
 ## Changelog ##
 
 ### 0.1.0 ###
