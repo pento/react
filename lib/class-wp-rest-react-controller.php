@@ -58,9 +58,9 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 			foreach ( (array) $request['post'] as $post_id ) {
 				$post = get_post( $post_id );
 				if ( ! empty( $post_id ) && $post && ! $this->check_read_post_permission( $post ) ) {
-					return new WP_Error( 'rest_cannot_read_post', __( 'Sorry, you cannot read the post for this reaction.' ), array( 'status' => rest_authorization_required_code() ) );
+					return new WP_Error( 'rest_cannot_read_post', __( 'Sorry, you cannot read the post for this reaction.', 'react' ), array( 'status' => rest_authorization_required_code() ) );
 				} else if ( 0 === $post_id && ! current_user_can( 'moderate_comments' ) ) {
-					return new WP_Error( 'rest_cannot_read', __( 'Sorry, you cannot read reactions without a post.' ), array( 'status' => rest_authorization_required_code() ) );
+					return new WP_Error( 'rest_cannot_read', __( 'Sorry, you cannot read reactions without a post.', 'react' ), array( 'status' => rest_authorization_required_code() ) );
 				}
 			}
 		}
@@ -136,11 +136,11 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	public function create_item_permissions_check( $request ) {
 		if ( ! empty( $request['post'] ) && $post = get_post( (int) $request['post'] ) ) {
 			if ( ! $this->check_read_post_permission( $post ) ) {
-				return new WP_Error( 'rest_cannot_read_post', __( 'Sorry, you cannot read the post for this reaction.' ), array( 'status' => rest_authorization_required_code() ) );
+				return new WP_Error( 'rest_cannot_read_post', __( 'Sorry, you cannot read the post for this reaction.', 'react' ), array( 'status' => rest_authorization_required_code() ) );
 			}
 
 			if ( ! comments_open( $post->ID ) ) {
-				return new WP_Error( 'rest_reactions_closed', __( 'Sorry, reactions are closed on this post.' ), array( 'status' => 403 ) );
+				return new WP_Error( 'rest_reactions_closed', __( 'Sorry, reactions are closed on this post.', 'react' ), array( 'status' => 403 ) );
 			}
 		}
 		return true;
@@ -271,7 +271,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 
 		$query_params['post']   = array(
 			'default'           => array(),
-			'description'       => __( 'Limit result set to resources assigned to specific post ids.' ),
+			'description'       => __( 'Limit result set to resources assigned to specific post ids.', 'react' ),
 			'type'              => 'array',
 			'sanitize_callback' => 'wp_parse_id_list',
 			'validate_callback' => 'rest_validate_request_arg',
@@ -289,7 +289,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 
 		$query_params['post']   = array(
 			'default'           => array(),
-			'description'       => __( 'The post ID to add a reaction to.' ),
+			'description'       => __( 'The post ID to add a reaction to.', 'react' ),
 			'type'              => 'integer',
 			'sanitize_callback' => 'absint',
 			'validate_callback' => 'rest_validate_request_arg',
@@ -297,7 +297,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 
 		$query_params['emoji']  = array(
 			'default'           => array(),
-			'description'       => __( 'The reaction emoji.' ),
+			'description'       => __( 'The reaction emoji.', 'react' ),
 			'type'              => 'string',
 			'validate_callback' => 'rest_validate_request_arg',
 		);

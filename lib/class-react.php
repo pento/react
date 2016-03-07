@@ -104,7 +104,7 @@ class React {
 		}
 
 		/* translators: This is the emoji used for the "Add new emoji reaction" button */
-		$content .= "<div data-post='$post_id' class='emoji-reaction-add'><div class='emoji'>" . __( '😃+', 'reactions' ) . '</div></div>';
+		$content .= "<div data-post='$post_id' class='emoji-reaction-add'><div class='emoji'>" . __( '😃+', 'react' ) . '</div></div>';
 		$content .= '</div>';
 		return $content;
 	}
@@ -113,14 +113,14 @@ class React {
 		?>
 			<div id="emoji-reaction-selector" style="display: none;">
 				<div class="tabs">
-					<div data-tab="0" alt="<?php echo __( 'People',   'reactions' ); ?>" class="emoji-reaction-tab"><?php echo __( '😀', 'reactions' ); ?></div>
-					<div data-tab="1" alt="<?php echo __( 'Nature',   'reactions' ); ?>" class="emoji-reaction-tab"><?php echo __( '🌿', 'reactions' ); ?></div>
-					<div data-tab="2" alt="<?php echo __( 'Food',     'reactions' ); ?>" class="emoji-reaction-tab"><?php echo __( '🍔', 'reactions' ); ?></div>
-					<div data-tab="3" alt="<?php echo __( 'Activity', 'reactions' ); ?>" class="emoji-reaction-tab"><?php echo __( '⚽️', 'reactions' ); ?></div>
-					<div data-tab="4" alt="<?php echo __( 'Places',   'reactions' ); ?>" class="emoji-reaction-tab"><?php echo __( '✈️', 'reactions' ); ?></div>
-					<div data-tab="5" alt="<?php echo __( 'Objects',  'reactions' ); ?>" class="emoji-reaction-tab"><?php echo __( '💡', 'reactions' ); ?></div>
-					<div data-tab="6" alt="<?php echo __( 'Symbols',  'reactions' ); ?>" class="emoji-reaction-tab"><?php echo __( '❤', 'reactions' ); ?></div>
-					<div data-tab="7" alt="<?php echo __( 'Flags',    'reactions' ); ?>" class="emoji-reaction-tab"><?php echo __( '🇺🇸', 'reactions' ); ?></div>
+					<div data-tab="0" alt="<?php echo __( 'People',   'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '😀', 'react' ); ?></div>
+					<div data-tab="1" alt="<?php echo __( 'Nature',   'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '🌿', 'react' ); ?></div>
+					<div data-tab="2" alt="<?php echo __( 'Food',     'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '🍔', 'react' ); ?></div>
+					<div data-tab="3" alt="<?php echo __( 'Activity', 'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '⚽️', 'react' ); ?></div>
+					<div data-tab="4" alt="<?php echo __( 'Places',   'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '✈️', 'react' ); ?></div>
+					<div data-tab="5" alt="<?php echo __( 'Objects',  'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '💡', 'react' ); ?></div>
+					<div data-tab="6" alt="<?php echo __( 'Symbols',  'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '❤', 'react' ); ?></div>
+					<div data-tab="7" alt="<?php echo __( 'Flags',    'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '🇺🇸', 'react' ); ?></div>
 				</div>
 				<div class="container container-0"></div>
 				<div class="container container-1"></div>
