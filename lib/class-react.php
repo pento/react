@@ -56,7 +56,8 @@ class React {
 				window.wp = window.wp || {};
 				window.wp.react = window.wp.react || {};
 				window.wp.react.settings = {
-					emoji_url: '<?php echo REACT_URL . '/static/emoji.json' ?>'
+					emoji_url: '<?php echo REACT_URL . '/static/emoji.json' ?>',
+					endpoint:  '<?php echo get_rest_url( null, $this->api->namespace . '/' . $this->api->rest_base ); ?>'
 				}
 			</script>
 		<?php

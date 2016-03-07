@@ -196,24 +196,37 @@
 	 * @param  HtmlElement el The button that was clicked
 	 */
 	var react = function( el ) {
-		var post_id;
-		if ( el.dataset.post_id ) {
-			post_id = el.dataset.post_id;
+		var post, params, xhr;
+
+		if ( el.dataset.post ) {
+			post = el.dataset.post;
 		} else {
-			post_id = el.parentElement.parentElement.dataset.post_id;
+			post = el.parentElement.parentElement.dataset.post;
 		}
+
+		params = 'post=' + post + '&emoji=' + el.dataset.emoji;
+
+		xhr = new XMLHttpRequest();
+
+		xhr.open( 'POST', settings.endpoint, true );
+
+		xhr.setRequestHeader( 'Content-type', 'application/x-www-form-urlencoded' );
+
+		xhr.send( params );
 	};
 
 	/**
 	 * Load the emoji definition JSON blob
 	 */
 	var loadEmoji = function() {
+		var xhr;
+
 		if ( loading ) {
 			return;
 		}
 		loading = true;
 
-		var xhr = new XMLHttpRequest();
+		xhr = new XMLHttpRequest();
 		xhr.onreadystatechange = function() {
 			if ( xhr.readyState === XMLHttpRequest.DONE ) {
 				if ( 200 === xhr.status ) {

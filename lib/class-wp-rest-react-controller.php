@@ -3,20 +3,20 @@
 /**
  * Class WP_REST_React_Controller
  */
-class WP_REST_React_Controller {
+class WP_REST_React_Controller extends WP_REST_Controller {
 	/**
 	 * The namespace of this controller's route.
 	 *
 	 * @var string
 	 */
-	protected $namespace;
+	public $namespace;
 
 	/**
 	 * The base of this controller's route.
 	 *
 	 * @var string
 	 */
-	protected $rest_base;
+	public $rest_base;
 
 	/**
 	 * Constructor.
@@ -34,13 +34,13 @@ class WP_REST_React_Controller {
 			array(
 				'methods'             => WP_Rest_Server::READABLE,
 				'callback'            => array( $this, 'get_items' ),
-				'permission_callback' => array( $this, 'get_items_permission_callback' ),
+				'permission_callback' => array( $this, 'get_items_permissions_check' ),
 				'args'                => $this->get_collection_params(),
 			),
 			array(
 				'methods'             => WP_Rest_Server::CREATABLE,
 				'callback'            => array( $this, 'create_item' ),
-				'permission_callback' => array( $this, 'create_item_permission_callback' ),
+				'permission_callback' => array( $this, 'create_item_permissions_check' ),
 				'args'                => $this->get_creation_params(),
 			),
 			'schema' => array( $this, 'get_public_item_schema' ),
@@ -134,6 +134,15 @@ class WP_REST_React_Controller {
 	 * @return WP_Error|boolean
 	 */
 	public function create_item_permissions_check( $request ) {
+		if ( ! empty( $request['post'] ) && $post = get_post( (int) $request['post'] ) ) {
+			if ( ! $this->check_read_post_permission( $post ) ) {
+				return new WP_Error( 'rest_cannot_read_post', __( 'Sorry, you cannot read the post for this reaction.' ), array( 'status' => rest_authorization_required_code() ) );
+			}
+
+			if ( ! comments_open( $post->ID ) ) {
+				return new WP_Error( 'rest_reactions_closed', __( 'Sorry, reactions are closed on this post.' ), array( 'status' => 403 ) );
+			}
+		}
 		return true;
 	}
 
@@ -144,6 +153,15 @@ class WP_REST_React_Controller {
 	 * @return WP_Error|WP_REST_Response
 	 */
 	public function create_item( $request ) {
+		$comment = array(
+			'comment_content' => $request['emoji'],
+			'comment_post_ID' => $request['post'],
+			'comment_type'    => 'reaction',
+		);
+
+		wp_insert_comment( $comment );
+
+		return $this->get_items( $request );
 	}
 
 	/**
@@ -220,7 +238,7 @@ class WP_REST_React_Controller {
 	protected function prepare_links( $reaction ) {
 		$links = array(
 			'self' => array(
-				'href' => rest_url( sprintf( '/%s/%s/%s', $this->namespace, $this->rest_base, $reaction->emoji ) ),
+				'href' => rest_url( sprintf( '/%s/%s/%s', $this->namespace, $this->rest_base, $reaction['emoji'] ) ),
 			),
 			'collection' => array(
 				'href' => rest_url( sprintf( '/%s/%s', $this->namespace, $this->rest_base ) ),
