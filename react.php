@@ -3,6 +3,7 @@
 Plugin Name: React
 Description: 💩 Reactions.
 Version: 0.1
+Text Domain: react
 */
 
 define( 'REACT_URL', plugins_url( '', __FILE__ ) );
