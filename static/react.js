@@ -175,6 +175,7 @@
 	 * @param  int tab_number The tab number to switch to.
 	 */
 	var changeReactionTab = function( tab_number ) {
+		var ii;
 		for( ii = 0; ii <= 7; ii++ ) {
 			tab = popup.getElementsByClassName( 'container-' + ii );
 			if ( 1 !== tab.length ) {
@@ -182,7 +183,7 @@
 			}
 			tab = tab[0];
 
-			if ( ii == tab_number ) {
+			if ( ii === tab_number ) {
 				tab.style.display = 'block';
 			} else {
 				tab.style.display = 'none';
