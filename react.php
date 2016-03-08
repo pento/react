@@ -13,6 +13,8 @@ function react_load() {
 		return;
 	}
 
+	load_plugin_textdomain( 'react' );
+
 	require_once( dirname( __FILE__ ) . '/lib/class-wp-rest-react-controller.php' );
 
 	require_once( dirname( __FILE__ ) . '/lib/class-react.php' );
