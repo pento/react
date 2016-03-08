@@ -17,9 +17,9 @@ It's what you've always dreamed of.
 
 Additional information at https://make.wordpress.org/core/2016/03/07/reactions/
 
-[![Build Status](https://travis-ci.org/pento/reactions.svg?branch=master)](https://travis-ci.org/pento/reactions)
+[![Build Status](https://travis-ci.org/pento/react.svg?branch=master)](https://travis-ci.org/pento/react)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/pento/reactions/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/pento/reactions/?branch=master)
-[![codecov.io](https://codecov.io/github/pento/reactions/coverage.svg?branch=master)](https://codecov.io/github/pento/reactions?branch=master)
+[![codecov.io](https://codecov.io/github/pento/react/coverage.svg?branch=master)](https://codecov.io/github/pento/react?branch=master)
 
 ## Changelog ##
 
