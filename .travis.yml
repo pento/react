@@ -30,3 +30,10 @@ script:
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+
+notifications:
+  slack:
+    secure: m8wmVqRIg/S7oH5GDDmzyavlrzbQv0cX0JG9Yo8LKLNelcHEZj95a7Qvmwf/hIKwCgPfeFdq/Gy8BnQDRmfpZ255J7S/JoYIRCGcJ6CVv/EY0ijP5617+cgmHoj4TgApn3+wzkh2sfckJqI161mmrGnJM2ZQTi/NZXH8fKkcmTjSKa0Bo/GqwJS/o0SLfQuSlbRWIFb7iYmAQPCl4Aj1v/HnVX7AjJPKqmytcvWUdTTSRbEma3MufD7KgTQmdMASbd72pEevTIsaohvRnV1mM8niRD254ny31hKSBvoNW2dg/hD0a0a89i70AsIzvCQ5/d1adLCzbDPwQA0MTw7/3AMp9x3BcKy88MA/LdiIvh7xUXL7zJ+v0pDbRBBzvRT++WXEUSAZfh6XfuvxScNJE0dAjLbylksEFA6VW2A23ojJ0F6wbZqt5W04WZh56wkwWF8xE+441psfC2hDzGuqsZFTdViZt0Z4pYg+sCjt6rKCZs9/qLT3AtrYsuqHm4Tmt0Jc5oagXje25kuq04L6iWSqlOnaV8QBajRKgX2TSLNSrwLf9BxysG/Ef3JuO3LpjQGUMlJiigymhZRV3DbmcvePFu5hVHcIitoQjgUY11eVil69y32WGvLGAu3X1nzbpsm6+43M/ebR2y0OJDOqTJ5aC1gqI5kVvYwmnillkiw=
+    on_start: never
+    on_failure: always
+    on_success: change
