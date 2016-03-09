@@ -74,4 +74,8 @@ class React_Test_Frontend extends WP_UnitTestCase {
 
 		$this->assertGreaterThanOrEqual( 0, strpos( '<div class="emoji-reaction-selector"', $footer ) );
 	}
+
+	function test_failure() {
+		$this->assertTrue( false );
+	}
 }
