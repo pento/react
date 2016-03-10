@@ -62,13 +62,13 @@ install_test_suite() {
 install_db() {
 	if [[ "$DB" == "MySQL5.1" ]]; then
 		curl -L https://cpanmin.us | perl - App::cpanminus
-		~/perl5/perlbrew/bin/cpanm MySQL::Sandbox
+		~/perl5/bin/cpanm MySQL::Sandbox
 
 		local SANDBOX_FILE=mysql-5.1.72-linux-x86_64-glibc23.tar.gz
 
 		wget http://downloads.mysql.com/archives/get/file/"$SANDBOX_FILE"
 
-		~/perl5/perlbrew/bin/make_sandbox "$SANDBOX_FILE" -- -u travis -p travis -P 3310 -d msb --no_confirm
+		~/perl5/bin/make_sandbox "$SANDBOX_FILE" -- -u travis -p travis -P 3310 -d msb --no_confirm
 	fi
 
 	# parse DB_HOST for port or socket references
