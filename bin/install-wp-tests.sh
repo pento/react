@@ -61,15 +61,13 @@ install_test_suite() {
 
 install_db() {
 	if [[ "$DB" == "MySQL5.1" ]]; then
-		sudo apt-get install -y perl libaio1 libaio-dev
 		curl -L https://cpanmin.us | sudo perl - App::cpanminus
-		sudo cpanm MySQL::Sandbox
+		cpanm MySQL::Sandbox
 
 		local SANDBOX_FILE=mysql-5.1.72-linux-x86_64-glibc23.tar.gz
 
 		wget http://downloads.mysql.com/archives/get/file/"$SANDBOX_FILE"
 
-		sudo chown -R travis:travis ~/sandboxes
 		make_sandbox "$SANDBOX_FILE" -- -u travis -p travis -P 3310 -d msb --no_confirm
 	fi
 
