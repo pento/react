@@ -51,7 +51,7 @@ before_script:
 
   - >
     if [[ "$DB" == "MySQL5.1" ]]; then
-      bash bin/install-wp-tests.sh wordpress_test travis travil 127.0.0.1:3310 $WP_VERSION
+      bash bin/install-wp-tests.sh wordpress_test travis travis 127.0.0.1:3310 $WP_VERSION
     else
       bash bin/install-wp-tests.sh wordpress_test root '' 127.0.0.1 $WP_VERSION
     fi
