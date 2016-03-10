@@ -62,6 +62,7 @@ install_test_suite() {
 install_db() {
 	if [[ "$DB" == "MySQL5.1" ]]; then
 		curl -L https://cpanmin.us | perl - App::cpanminus
+		export PERL5LIB=~/perl5/lib/perl5
 		~/perl5/bin/cpanm MySQL::Sandbox
 
 		local SANDBOX_FILE=mysql-5.1.72-linux-x86_64-glibc23.tar.gz
