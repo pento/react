@@ -1,21 +1,45 @@
 language: php
 
-php:
-  - 5.2
-  - 5.3
-  - 5.4
-  - 5.5
-  - 5.6
-  - 7.0
-  - hhvm
-
 matrix:
+  include:
+    - php: 5.2
+      env: WP_VERSION=nightly WP_MULTISITE=0
+    - php: 5.2
+      env: WP_VERSION=nightly WP_MULTISITE=1
+    - php: 5.3
+      env: WP_VERSION=nightly WP_MULTISITE=0
+    - php: 5.3
+      env: WP_VERSION=nightly WP_MULTISITE=1
+    - php: 5.4
+      env: WP_VERSION=nightly WP_MULTISITE=0
+    - php: 5.4
+      env: WP_VERSION=nightly WP_MULTISITE=1
+    - php: 5.5
+      env: WP_VERSION=nightly WP_MULTISITE=0
+    - php: 5.5
+      env: WP_VERSION=nightly WP_MULTISITE=1
+    - php: 5.6
+      env: WP_VERSION=nightly WP_MULTISITE=0
+    - php: 5.6
+      env: WP_VERSION=nightly WP_MULTISITE=1
+    - php: 5.6
+      env: WP_VERSION=nightly WP_MULTISITE=0 DB=MySQL5.1
+    - php: 7.0
+      env: WP_VERSION=nightly WP_MULTISITE=0
+    - php: 7.0
+      env: WP_VERSION=nightly WP_MULTISITE=1
+    - php: hhvm
+      env: WP_VERSION=nightly WP_MULTISITE=0
+    - php: hhvm
+      env: WP_VERSION=nightly WP_MULTISITE=1
+
   allow_failures:
     - php: hhvm
 
-env:
-  - WP_VERSION=nightly WP_MULTISITE=0
-  - WP_VERSION=nightly WP_MULTISITE=1
+addons:
+  apt:
+    packages:
+      - perl
 
 # Clones WordPress and configures our testing environment.
 before_script:
@@ -23,7 +47,12 @@ before_script:
   - composer install --no-interaction
   - phpenv local --unset
 
-  - bash bin/install-wp-tests.sh wordpress_test root '' 127.0.0.1 $WP_VERSION
+  - >
+    if [[ "$DB" == "MySQL5.1" ]]; then
+      bash bin/install-wp-tests.sh wordpress_test travis travis 127.0.0.1:3310 $WP_VERSION
+    else
+      bash bin/install-wp-tests.sh wordpress_test root '' 127.0.0.1 $WP_VERSION
+    fi
 
 script:
   - phpunit --coverage-clover=coverage.xml
