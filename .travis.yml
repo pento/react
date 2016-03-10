@@ -40,8 +40,6 @@ addons:
   apt:
     packages:
       - perl
-      - libaio1
-      - libaio-dev
 
 # Clones WordPress and configures our testing environment.
 before_script:
