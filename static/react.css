@@ -6,14 +6,13 @@
 .emoji-reaction-add {
 	width: 60px;
 	float: left;
-	border: 1px solid black;
 	cursor: pointer;
 	box-sizing: border-box;
 }
 
 .emoji-reaction:hover,
 .emoji-reaction-add:hover {
-	border-color: red;
+	background-color: #aaa;
 }
 
 .emoji-reaction *,
@@ -43,11 +42,17 @@
 
 #emoji-reaction-selector .tabs div {
 	float: left;
-	border: 1px solid black;
+	width: 37px;
+    height: 100%;
+    text-align: center;
 }
 
 #emoji-reaction-selector .tabs div:hover {
 	background-color: #ddd
+}
+
+#emoji-reaction-selector .tabs div:last-child {
+	float: right;
 }
 
 #emoji-reaction-selector .container {
@@ -58,7 +63,7 @@
 }
 
 #emoji-reaction-selector .emoji-reaction {
-	width: 30px;
+	width: 31px;
 }
 
 @media only screen and ( max-width: 768px ) {
@@ -73,6 +78,11 @@
 	#emoji-reaction-selector .tabs {
 		height: 50px;
 	}
+    
+        
+    #emoji-reaction-selector .tabs div {
+		width: 12.5%;
+	}
 
 	#emoji-reaction-selector .emoji-reaction,
 	#emoji-reaction-selector .emoji-reaction-tab {
@@ -83,22 +93,28 @@
 	#emoji-reaction-selector .emoji {
 		width: 100%;
 		height: 100%;
+        padding-top: 15%;
 	}
 
-	#emoji-reaction-selector .emoji img,
-	#emoji-reaction-selector .tabs .emoji {
+	#emoji-reaction-selector .emoji img,{
 		width: 70% !important;
 		height: 70% !important;
-		margin-top: 15% !important;
+	}
+    
+	#emoji-reaction-selector .tabs .emoji {
+		width: 1.5em !important;
+		height: 1.5em !important;
+		margin-top: 13% !important;
 	}
 
-	#emoji-reaction-selector .tabs .emoji {
-		margin-left: 15% !important;
-	}
 }
 
 @media only screen and ( max-width: 480px ) {
 	#emoji-reaction-selector {
 		height: 50%;
+	}
+    
+    #emoji-reaction-selector .tabs .emoji {
+		margin-top: 20% !important;
 	}
 }
