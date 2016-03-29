@@ -71,7 +71,7 @@
 		} else if ( parent.className.indexOf( 'emoji-reaction-tab' ) !== -1 ) {
 			event.preventDefault();
 			event.stopPropagation();
-			changeReactionTab( parent.dataset.tab );
+			changeReactionTab( parseInt( parent.dataset.tab ) );
 		} else if ( parent.className.indexOf( 'emoji-reaction' ) !== -1 ) {
 			event.preventDefault();
 			event.stopPropagation();
