@@ -43,7 +43,7 @@ class React_Test_Frontend extends WP_UnitTestCase {
 	function test_content_not_changed_outside_loop() {
 		$react = React::init();
 
-		$content ='foo';
+		$content = 'foo';
 
 		$this->assertEquals( $content, $react->the_content( $content ) );
 	}

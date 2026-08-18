@@ -9,7 +9,6 @@
 		"lint": "npm run lint:css && npm run lint:js"
 	},
 	"devDependencies": {
-		"@wordpress/scripts": "^31.0.0",
-		"typescript": "^5.5.0"
+		"@wordpress/scripts": "^34.1.0"
 	}
 }
