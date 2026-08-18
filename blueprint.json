@@ -1,0 +1,23 @@
+{
+  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+  "preferredVersions": {
+    "php": "8.5",
+    "wp": "latest"
+  },
+  "landingPage": "/?name=react-plugin-demo",
+  "steps": [
+    {
+      "step": "login",
+      "username": "admin",
+      "password": "password"
+    },
+    {
+      "step": "activatePlugin",
+      "pluginName": "react"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php\nrequire_once '/wordpress/wp-load.php';\n\n// Create a demo post if it doesn't already exist.\n$existing = get_page_by_path( 'react-plugin-demo', OBJECT, 'post' );\nif ( ! $existing ) {\n\t$post_id = wp_insert_post( array(\n\t\t'post_title'     => 'Try Emoji Reactions!',\n\t\t'post_name'      => 'react-plugin-demo',\n\t\t'post_content'   => '<!-- wp:paragraph -->\\n<p>Welcome to the React plugin demo! Below you can see how users can react to your content using emojis.</p>\\n<!-- /wp:paragraph -->',\n\t\t'post_status'    => 'publish',\n\t\t'comment_status' => 'open',\n\t) );\n\n\tif ( ! is_wp_error( $post_id ) ) {\n\t\t// Seed the post with some initial emoji reactions\n\t\t$initial_reactions = array(\n\t\t\t'😀' => 5,\n\t\t\t'🌿' => 3,\n\t\t\t'🍔' => 8,\n\t\t\t'⚽️' => 2,\n\t\t\t'💡' => 4,\n\t\t\t'❤'  => 12,\n\t\t);\n\n\t\tforeach ( $initial_reactions as $emoji => $count ) {\n\t\t\tfor ( $i = 0; $i < $count; $i++ ) {\n\t\t\t\twp_insert_comment( array(\n\t\t\t\t\t'comment_post_ID'  => $post_id,\n\t\t\t\t\t'comment_content'  => $emoji,\n\t\t\t\t\t'comment_type'     => 'reaction',\n\t\t\t\t\t'comment_approved' => 1,\n\t\t\t\t) );\n\t\t\t}\n\t\t}\n\t}\n}\n"
+    }
+  ]
+}
