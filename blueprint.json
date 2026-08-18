@@ -13,14 +13,17 @@
     },
     {
       "step": "installPlugin",
-      "pluginZipFile": {
+      "pluginData": {
         "resource": "url",
         "url": "https://github.com/georgestephanis/react/archive/refs/heads/update/wp-7.1.zip"
+      },
+      "options": {
+        "targetFolderName": "react"
       }
     },
     {
       "step": "runPHP",
-      "code": "<?php\nrequire_once '/wordpress/wp-load.php';\n$plugin_dirs = glob( WP_PLUGIN_DIR . '/react*' );\nif ( ! empty( $plugin_dirs ) ) {\n\trequire_once $plugin_dirs[0] . '/tools/seed-playground-data.php';\n}\n"
+      "code": "<?php\nrequire_once '/wordpress/wp-load.php';\nrequire_once '/wordpress/wp-content/plugins/react/tools/seed-playground-data.php';\n"
     }
   ]
 }
