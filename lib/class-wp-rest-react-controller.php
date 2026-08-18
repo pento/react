@@ -32,13 +32,13 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	public function register_routes() {
 		register_rest_route( $this->namespace, $this->rest_base, array(
 			array(
-				'methods'             => WP_Rest_Server::READABLE,
+				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_items' ),
 				'permission_callback' => array( $this, 'get_items_permissions_check' ),
 				'args'                => $this->get_collection_params(),
 			),
 			array(
-				'methods'             => WP_Rest_Server::CREATABLE,
+				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'create_item' ),
 				'permission_callback' => array( $this, 'create_item_permissions_check' ),
 				'args'                => $this->get_creation_params(),
@@ -102,7 +102,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 				);
 			}
 
-			$reactions_count[ $reaction->comment_content ]++;
+			$reactions_count[ $reaction->comment_content ]['count']++;
 		}
 
 		$reactions = array();
@@ -206,7 +206,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 		 * @param array             $reaction   The original reaction data.
 		 * @param WP_REST_Request   $request    Request used to generate the response.
 		 */
-		return apply_filters( 'rest_prepare_comment', $response, $reaction, $request );
+		return apply_filters( 'rest_prepare_reaction', $response, $reaction, $request );
 	}
 
 	/**
@@ -288,7 +288,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 		$query_params = array();
 
 		$query_params['post']   = array(
-			'default'           => array(),
+			'default'           => 0,
 			'description'       => __( 'The post ID to add a reaction to.', 'react' ),
 			'type'              => 'integer',
 			'sanitize_callback' => 'absint',
@@ -296,7 +296,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 		);
 
 		$query_params['emoji']  = array(
-			'default'           => array(),
+			'default'           => '',
 			'description'       => __( 'The reaction emoji.', 'react' ),
 			'type'              => 'string',
 			'validate_callback' => 'rest_validate_request_arg',

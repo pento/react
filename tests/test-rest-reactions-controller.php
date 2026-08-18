@@ -7,22 +7,80 @@
  */
 
 class WP_Test_REST_Reactions_Controller extends WP_Test_REST_Controller_Testcase {
-	public function test_register_routes() {}
+	public function set_up() {
+		parent::set_up();
+		global $wp_rest_server;
+		$this->server = $wp_rest_server;
+	}
 
-	public function test_context_param() {}
+	public function test_register_routes() {
+		$routes = $this->server->get_routes();
+		$this->assertArrayHasKey( '/wp/v2/react', $routes );
+		$this->assertCount( 2, $routes['/wp/v2/react'] );
+	}
 
-	 public function test_get_items() {}
+	public function test_context_param() {
+		$this->assertTrue( true ); // Reactions doesn't implement schema context
+	}
 
-	 public function test_get_item() {}
+	public function test_get_items() {
+		$post_id = $this->factory->post->create();
+		$request = new WP_REST_Request( 'GET', '/wp/v2/react' );
+		$request->set_param( 'post', array( $post_id ) );
+		$response = $this->server->dispatch( $request );
+		$this->assertEquals( 200, $response->get_status() );
+	}
 
-	 public function test_create_item() {}
+	public function test_get_item() {
+		$this->markTestSkipped( 'Get single reaction is not supported.' );
+	}
 
-	 public function test_update_item() {}
+	public function test_create_item() {
+		$post_id = $this->factory->post->create();
+		
+		// Set current user as administrator to bypass comments moderation/permission checks
+		$user_id = $this->factory->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user_id );
 
-	 public function test_delete_item() {}
+		$request = new WP_REST_Request( 'POST', '/wp/v2/react' );
+		$request->set_param( 'post', $post_id );
+		$request->set_param( 'emoji', '😀' );
+		$response = $this->server->dispatch( $request );
+		
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertCount( 1, $data );
+		$this->assertEquals( '😀', $data[0]['emoji'] );
+		$this->assertEquals( 1, $data[0]['count'] );
+	}
 
-	 public function test_prepare_item() {}
+	public function test_update_item() {
+		$this->markTestSkipped( 'Update reaction is not supported.' );
+	}
 
-	 public function test_get_item_schema() {}
+	public function test_delete_item() {
+		$this->markTestSkipped( 'Delete reaction is not supported.' );
+	}
 
+	public function test_prepare_item() {
+		$controller = new WP_REST_React_Controller();
+		$reaction = array(
+			'emoji'   => '😀',
+			'count'   => 5,
+			'post_id' => 123,
+		);
+		$request = new WP_REST_Request( 'GET', '/wp/v2/react' );
+		$response = $controller->prepare_item_for_response( $reaction, $request );
+		$data = $response->get_data();
+		
+		$this->assertEquals( '😀', $data['emoji'] );
+		$this->assertEquals( 5, $data['count'] );
+		$this->assertEquals( 123, $data['post_id'] );
+	}
+
+	public function test_get_item_schema() {
+		$controller = new WP_REST_React_Controller();
+		$schema = $controller->get_item_schema();
+		$this->assertIsArray( $schema );
+	}
 }

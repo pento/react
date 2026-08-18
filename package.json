@@ -1,0 +1,15 @@
+{
+	"name": "react",
+	"version": "0.1.0",
+	"description": "💩 Reactions plugin.",
+	"private": true,
+	"scripts": {
+		"lint:css": "wp-scripts lint-style 'static/*.css'",
+		"lint:js": "wp-scripts lint-js 'static/*.js'",
+		"lint": "npm run lint:css && npm run lint:js"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^31.0.0",
+		"typescript": "^5.5.0"
+	}
+}

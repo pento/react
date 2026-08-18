@@ -115,14 +115,14 @@ class React {
 		?>
 			<div id="emoji-reaction-selector" style="display: none;">
 				<div class="tabs">
-					<div data-tab="0" alt="<?php echo __( 'People',   'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '😀', 'react' ); ?></div>
-					<div data-tab="1" alt="<?php echo __( 'Nature',   'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '🌿', 'react' ); ?></div>
-					<div data-tab="2" alt="<?php echo __( 'Food',     'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '🍔', 'react' ); ?></div>
-					<div data-tab="3" alt="<?php echo __( 'Activity', 'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '⚽️', 'react' ); ?></div>
-					<div data-tab="4" alt="<?php echo __( 'Places',   'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '✈️', 'react' ); ?></div>
-					<div data-tab="5" alt="<?php echo __( 'Objects',  'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '💡', 'react' ); ?></div>
-					<div data-tab="6" alt="<?php echo __( 'Symbols',  'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '❤', 'react' ); ?></div>
-					<div data-tab="7" alt="<?php echo __( 'Flags',    'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '🇺🇸', 'react' ); ?></div>
+					<div data-tab="0" aria-label="<?php echo __( 'People',   'react' ); ?>" title="<?php echo __( 'People',   'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '😀', 'react' ); ?></div>
+					<div data-tab="1" aria-label="<?php echo __( 'Nature',   'react' ); ?>" title="<?php echo __( 'Nature',   'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '🌿', 'react' ); ?></div>
+					<div data-tab="2" aria-label="<?php echo __( 'Food',     'react' ); ?>" title="<?php echo __( 'Food',     'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '🍔', 'react' ); ?></div>
+					<div data-tab="3" aria-label="<?php echo __( 'Activity', 'react' ); ?>" title="<?php echo __( 'Activity', 'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '⚽️', 'react' ); ?></div>
+					<div data-tab="4" aria-label="<?php echo __( 'Places',   'react' ); ?>" title="<?php echo __( 'Places',   'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '✈️', 'react' ); ?></div>
+					<div data-tab="5" aria-label="<?php echo __( 'Objects',  'react' ); ?>" title="<?php echo __( 'Objects',  'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '💡', 'react' ); ?></div>
+					<div data-tab="6" aria-label="<?php echo __( 'Symbols',  'react' ); ?>" title="<?php echo __( 'Symbols',  'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '❤', 'react' ); ?></div>
+					<div data-tab="7" aria-label="<?php echo __( 'Flags',    'react' ); ?>" title="<?php echo __( 'Flags',    'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '🇺🇸', 'react' ); ?></div>
 				</div>
 				<div class="container container-0"></div>
 				<div class="container container-1"></div>

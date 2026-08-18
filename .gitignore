@@ -5,3 +5,5 @@ composer.lock
 # Vendor (e.g. Composer)
 vendor/*
 !vendor/.gitkeep
+.phpunit.result.cache
+/node_modules

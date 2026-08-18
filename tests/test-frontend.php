@@ -68,6 +68,8 @@ class React_Test_Frontend extends WP_UnitTestCase {
 
 		$this->go_to( get_permalink( $post_id ) );
 
+		$this->setExpectedDeprecated( 'the_block_template_skip_link' );
+
 		ob_start();
 		wp_footer();
 		$footer = ob_get_clean();
