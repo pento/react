@@ -226,7 +226,11 @@
 			post = el.parentElement.parentElement.dataset.post;
 		}
 
-		const params = 'post=' + post + '&emoji=' + el.dataset.emoji;
+		const params =
+			'post=' +
+			encodeURIComponent( post ) +
+			'&emoji=' +
+			encodeURIComponent( el.dataset.emoji );
 
 		const xhr = new XMLHttpRequest();
 
