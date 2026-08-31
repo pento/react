@@ -20,7 +20,7 @@ class WP_Test_REST_Reactions_Controller extends WP_Test_REST_Controller_Testcase
 	}
 
 	public function test_context_param() {
-		$this->assertTrue( true ); // Reactions doesn't implement schema context
+		$this->markTestSkipped( 'Reactions does not implement schema context.' );
 	}
 
 	public function test_get_items() {

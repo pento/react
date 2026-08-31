@@ -97,7 +97,7 @@
 		padding-top: 15%;
 	}
 
-	#emoji-reaction-selector .emoji img, {
+	#emoji-reaction-selector .emoji img {
 		width: 70% !important;
 		height: 70% !important;
 	}

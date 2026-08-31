@@ -80,7 +80,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	 */
 	public function get_items( $request ) {
 		$prepared_args = array(
-			'post__in' => $request['post'],
+			'post__in' => wp_parse_id_list( $request['post'] ),
 			'type'     => 'reaction',
 		);
 
@@ -292,17 +292,19 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 		$query_params = array();
 
 		$query_params['post'] = array(
-			'default'           => 0,
+			'required'          => true,
 			'description'       => __( 'The post ID to add a reaction to.', 'react' ),
 			'type'              => 'integer',
+			'minimum'           => 1,
 			'sanitize_callback' => 'absint',
 			'validate_callback' => 'rest_validate_request_arg',
 		);
 
 		$query_params['emoji'] = array(
-			'default'           => '',
+			'required'          => true,
 			'description'       => __( 'The reaction emoji.', 'react' ),
 			'type'              => 'string',
+			'minLength'         => 1,
 			'validate_callback' => 'rest_validate_request_arg',
 		);
 
