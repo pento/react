@@ -8,6 +8,7 @@
 	<exclude-pattern>/node_modules/</exclude-pattern>
 	<exclude-pattern>/tests/bootstrap.php</exclude-pattern>
 	<exclude-pattern>/tests/class-wp-test-*</exclude-pattern>
+	<exclude-pattern>/tools/compile_emoji.php</exclude-pattern>
 
 	<!-- How to scan -->
 	<arg value="sp"/>
@@ -18,4 +19,9 @@
 	<rule ref="WordPress-Core" />
 	<rule ref="WordPress-Docs" />
 	<rule ref="WordPress-Extra" />
+
+	<!-- Test methods are self-documenting by name; don't require a docblock on every one. -->
+	<rule ref="Squiz.Commenting.FunctionComment.Missing">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
 </ruleset>

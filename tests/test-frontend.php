@@ -1,16 +1,18 @@
 <?php
-
 /**
  * Test frontend stuff.
  *
  * @package react
  */
 
+/**
+ * Class React_Test_Frontend
+ */
 class React_Test_Frontend extends WP_UnitTestCase {
 	/**
-	 * Test that the container is added to a post
+	 * Test that the container is added to a post.
 	 */
-	function test_container_exists() {
+	public function test_container_exists() {
 		$post_id = $this->factory->post->create();
 
 		$this->go_to( get_permalink( $post_id ) );
@@ -23,9 +25,9 @@ class React_Test_Frontend extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test that the Add Reaction button is added to a post
+	 * Test that the Add Reaction button is added to a post.
 	 */
-	function test_add_button_exists() {
+	public function test_add_button_exists() {
 		$post_id = $this->factory->post->create();
 
 		$this->go_to( get_permalink( $post_id ) );
@@ -40,7 +42,7 @@ class React_Test_Frontend extends WP_UnitTestCase {
 	/**
 	 * Test that React::the_content() doesn't change the content when not in the loop.
 	 */
-	function test_content_not_changed_outside_loop() {
+	public function test_content_not_changed_outside_loop() {
 		$react = React::init();
 
 		$content = 'foo';
@@ -51,7 +53,7 @@ class React_Test_Frontend extends WP_UnitTestCase {
 	/**
 	 * Test that the emoji.json URL is passed.
 	 */
-	function test_json_url_is_passed() {
+	public function test_json_url_is_passed() {
 		$post_id = $this->factory->post->create();
 
 		$this->go_to( get_permalink( $post_id ) );
@@ -63,7 +65,10 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		$this->assertEquals( 1, preg_match( "/emoji_url: '[^']*emoji.json'/", $head ) );
 	}
 
-	function test_selector_in_footer() {
+	/**
+	 * Test that the reaction selector markup is added to the footer.
+	 */
+	public function test_selector_in_footer() {
 		$post_id = $this->factory->post->create();
 
 		$this->go_to( get_permalink( $post_id ) );

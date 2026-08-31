@@ -6,7 +6,8 @@
 	"scripts": {
 		"lint:css": "wp-scripts lint-style 'static/*.css'",
 		"lint:js": "wp-scripts lint-js 'static/*.js'",
-		"lint": "npm run lint:css && npm run lint:js"
+		"lint": "npm run lint:css && npm run lint:js",
+		"format": "wp-scripts format 'static/*.{css,js}'"
 	},
 	"devDependencies": {
 		"@wordpress/scripts": "^34.1.0"

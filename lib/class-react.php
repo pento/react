@@ -1,9 +1,13 @@
 <?php
-
 /**
- * Class WP_REST_React_Controller
+ * Class React
+ *
+ * @package react
  */
 
+/**
+ * Class React
+ */
 class React {
 
 	/**
@@ -57,8 +61,8 @@ class React {
 				window.wp = window.wp || {};
 				window.wp.react = window.wp.react || {};
 				window.wp.react.settings = {
-					emoji_url: '<?php echo REACT_URL . '/static/emoji.json'; ?>',
-					endpoint:  '<?php echo get_rest_url( null, $this->api->namespace . '/' . $this->api->rest_base ); ?>'
+					emoji_url: '<?php echo esc_url( REACT_URL . '/static/emoji.json' ); ?>',
+					endpoint:  '<?php echo esc_url( get_rest_url( null, $this->api->namespace . '/' . $this->api->rest_base ) ); ?>'
 				}
 			</script>
 		<?php
@@ -68,16 +72,16 @@ class React {
 	 * Enqueue relevant JS and CSS
 	 */
 	public function enqueue() {
-		wp_enqueue_style( 'react-emoji', REACT_URL . '/static/react.css' );
+		wp_enqueue_style( 'react-emoji', REACT_URL . '/static/react.css', array(), REACT_VERSION );
 
-		wp_enqueue_script( 'react-emoji', REACT_URL . '/static/react.js', array(), false, true );
+		wp_enqueue_script( 'react-emoji', REACT_URL . '/static/react.js', array(), REACT_VERSION, true );
 	}
 
 	/**
 	 * Add the reaction buttons to the post content.
 	 *
-	 * @param  string $content The content HTML
-	 * @return string The content HTML, with the react buttons attached
+	 * @param  string $content The content HTML.
+	 * @return string The content HTML, with the react buttons attached.
 	 */
 	public function the_content( $content ) {
 		$post_id = get_the_ID();
@@ -115,18 +119,21 @@ class React {
 		return $content;
 	}
 
+	/**
+	 * Print the emoji reaction selector markup.
+	 */
 	public function print_selector() {
 		?>
 			<div id="emoji-reaction-selector" style="display: none;">
 				<div class="tabs">
-					<div data-tab="0" aria-label="<?php echo __( 'People', 'react' ); ?>" title="<?php echo __( 'People', 'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '😀', 'react' ); ?></div>
-					<div data-tab="1" aria-label="<?php echo __( 'Nature', 'react' ); ?>" title="<?php echo __( 'Nature', 'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '🌿', 'react' ); ?></div>
-					<div data-tab="2" aria-label="<?php echo __( 'Food', 'react' ); ?>" title="<?php echo __( 'Food', 'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '🍔', 'react' ); ?></div>
-					<div data-tab="3" aria-label="<?php echo __( 'Activity', 'react' ); ?>" title="<?php echo __( 'Activity', 'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '⚽️', 'react' ); ?></div>
-					<div data-tab="4" aria-label="<?php echo __( 'Places', 'react' ); ?>" title="<?php echo __( 'Places', 'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '✈️', 'react' ); ?></div>
-					<div data-tab="5" aria-label="<?php echo __( 'Objects', 'react' ); ?>" title="<?php echo __( 'Objects', 'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '💡', 'react' ); ?></div>
-					<div data-tab="6" aria-label="<?php echo __( 'Symbols', 'react' ); ?>" title="<?php echo __( 'Symbols', 'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '❤', 'react' ); ?></div>
-					<div data-tab="7" aria-label="<?php echo __( 'Flags', 'react' ); ?>" title="<?php echo __( 'Flags', 'react' ); ?>" class="emoji-reaction-tab"><?php echo __( '🇺🇸', 'react' ); ?></div>
+					<div data-tab="0" aria-label="<?php echo esc_attr__( 'People', 'react' ); ?>" title="<?php echo esc_attr__( 'People', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '😀', 'react' ); ?></div>
+					<div data-tab="1" aria-label="<?php echo esc_attr__( 'Nature', 'react' ); ?>" title="<?php echo esc_attr__( 'Nature', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '🌿', 'react' ); ?></div>
+					<div data-tab="2" aria-label="<?php echo esc_attr__( 'Food', 'react' ); ?>" title="<?php echo esc_attr__( 'Food', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '🍔', 'react' ); ?></div>
+					<div data-tab="3" aria-label="<?php echo esc_attr__( 'Activity', 'react' ); ?>" title="<?php echo esc_attr__( 'Activity', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '⚽️', 'react' ); ?></div>
+					<div data-tab="4" aria-label="<?php echo esc_attr__( 'Places', 'react' ); ?>" title="<?php echo esc_attr__( 'Places', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '✈️', 'react' ); ?></div>
+					<div data-tab="5" aria-label="<?php echo esc_attr__( 'Objects', 'react' ); ?>" title="<?php echo esc_attr__( 'Objects', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '💡', 'react' ); ?></div>
+					<div data-tab="6" aria-label="<?php echo esc_attr__( 'Symbols', 'react' ); ?>" title="<?php echo esc_attr__( 'Symbols', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '❤', 'react' ); ?></div>
+					<div data-tab="7" aria-label="<?php echo esc_attr__( 'Flags', 'react' ); ?>" title="<?php echo esc_attr__( 'Flags', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '🇺🇸', 'react' ); ?></div>
 				</div>
 				<div class="container container-0"></div>
 				<div class="container container-1"></div>

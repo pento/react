@@ -9,7 +9,8 @@ License URI:       http://www.gnu.org/licenses/gpl-2.0.html
 
 💩 reactions.
 
-[![WordPress Playground](https://img.shields.io/badge/WordPress%20Playground-Try%20it%20now!-blue?logo=wordpress&logoColor=white)](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/georgestephanis/react/update/wp-7.1/blueprint.json)
+[![WordPress Playground](https://img.shields.io/badge/WordPress%20Playground-Try%20it%20now!-blue?logo=wordpress&logoColor=white)](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/pento/react/master/blueprint.json)
+[![Lint](https://github.com/pento/react/actions/workflows/lint.yml/badge.svg)](https://github.com/pento/react/actions/workflows/lint.yml)
 
 ## Description ##
 

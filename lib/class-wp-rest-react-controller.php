@@ -1,4 +1,9 @@
 <?php
+/**
+ * Class WP_REST_React_Controller
+ *
+ * @package react
+ */
 
 /**
  * Class WP_REST_React_Controller
@@ -138,7 +143,9 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	 * @return WP_Error|boolean
 	 */
 	public function create_item_permissions_check( $request ) {
-		if ( ! empty( $request['post'] ) && $post = get_post( (int) $request['post'] ) ) {
+		$post = ! empty( $request['post'] ) ? get_post( (int) $request['post'] ) : null;
+
+		if ( $post ) {
 			if ( ! $this->check_read_post_permission( $post ) ) {
 				return new WP_Error( 'rest_cannot_read_post', __( 'Sorry, you cannot read the post for this reaction.', 'react' ), array( 'status' => rest_authorization_required_code() ) );
 			}
@@ -196,7 +203,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 			'post_id' => (int) $reaction['post_id'],
 		);
 
-		// Wrap the data in a response object
+		// Wrap the data in a response object.
 		$response = rest_ensure_response( $data );
 
 		$response->add_links( $this->prepare_links( $reaction ) );

@@ -1,11 +1,13 @@
 <?php
-
 /**
  * Test the API endpoints.
  *
  * @package react
  */
 
+/**
+ * Class WP_Test_REST_Reactions_Controller
+ */
 class WP_Test_REST_Reactions_Controller extends WP_Test_REST_Controller_Testcase {
 	public function set_up() {
 		parent::set_up();
@@ -38,7 +40,7 @@ class WP_Test_REST_Reactions_Controller extends WP_Test_REST_Controller_Testcase
 	public function test_create_item() {
 		$post_id = $this->factory->post->create();
 
-		// Set current user as administrator to bypass comments moderation/permission checks
+		// Set current user as administrator to bypass comments moderation/permission checks.
 		$user_id = $this->factory->user->create( array( 'role' => 'administrator' ) );
 		wp_set_current_user( $user_id );
 
