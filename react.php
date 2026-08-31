@@ -15,9 +15,9 @@ function react_load() {
 
 	load_plugin_textdomain( 'react' );
 
-	require_once( dirname( __FILE__ ) . '/lib/class-wp-rest-react-controller.php' );
+	require_once __DIR__ . '/lib/class-wp-rest-react-controller.php';
 
-	require_once( dirname( __FILE__ ) . '/lib/class-react.php' );
+	require_once __DIR__ . '/lib/class-react.php';
 
 	add_action( 'init', array( 'React', 'init' ) );
 }

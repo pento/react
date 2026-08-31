@@ -43,7 +43,7 @@ class React_Test_Frontend extends WP_UnitTestCase {
 	function test_content_not_changed_outside_loop() {
 		$react = React::init();
 
-		$content ='foo';
+		$content = 'foo';
 
 		$this->assertEquals( $content, $react->the_content( $content ) );
 	}
@@ -67,6 +67,8 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		$post_id = $this->factory->post->create();
 
 		$this->go_to( get_permalink( $post_id ) );
+
+		$this->setExpectedDeprecated( 'the_block_template_skip_link' );
 
 		ob_start();
 		wp_footer();

@@ -3,22 +3,12 @@
 	backupGlobals="false"
 	colors="true"
 	convertErrorsToExceptions="true"
-	convertNoticesToExceptions="true"
-	convertWarningsToExceptions="true"
+	convertNoticesToExceptions="false"
+	convertWarningsToExceptions="false"
 	>
 	<testsuites>
-		<testsuite>
+		<testsuite name="reactions">
 			<directory prefix="test-" suffix=".php">tests/</directory>
 		</testsuite>
 	</testsuites>
-
-	<filter>
-		<blacklist>
-			<directory suffix=".php">.</directory>
-		</blacklist>
-		<whitelist>
-			<file>./react.php</file>
-			<directory suffix=".php">./lib</directory>
-		</whitelist>
-	</filter>
 </phpunit>

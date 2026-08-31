@@ -1,0 +1,29 @@
+{
+  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+  "preferredVersions": {
+    "php": "8.5",
+    "wp": "latest"
+  },
+  "landingPage": "/?name=react-plugin-demo",
+  "steps": [
+    {
+      "step": "login",
+      "username": "admin",
+      "password": "password"
+    },
+    {
+      "step": "installPlugin",
+      "pluginData": {
+        "resource": "url",
+        "url": "https://github.com/georgestephanis/react/archive/refs/heads/update/wp-7.1.zip"
+      },
+      "options": {
+        "targetFolderName": "react"
+      }
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php\nrequire_once '/wordpress/wp-load.php';\nrequire_once '/wordpress/wp-content/plugins/react/tools/seed-playground-data.php';\n"
+    }
+  ]
+}

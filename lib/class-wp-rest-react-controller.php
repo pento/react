@@ -30,21 +30,25 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	 * Register the routes for the objects of the controller.
 	 */
 	public function register_routes() {
-		register_rest_route( $this->namespace, $this->rest_base, array(
+		register_rest_route(
+			$this->namespace,
+			$this->rest_base,
 			array(
-				'methods'             => WP_Rest_Server::READABLE,
-				'callback'            => array( $this, 'get_items' ),
-				'permission_callback' => array( $this, 'get_items_permissions_check' ),
-				'args'                => $this->get_collection_params(),
-			),
-			array(
-				'methods'             => WP_Rest_Server::CREATABLE,
-				'callback'            => array( $this, 'create_item' ),
-				'permission_callback' => array( $this, 'create_item_permissions_check' ),
-				'args'                => $this->get_creation_params(),
-			),
-			'schema' => array( $this, 'get_public_item_schema' ),
-		) );
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_items' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => $this->get_collection_params(),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_item' ),
+					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+					'args'                => $this->get_creation_params(),
+				),
+				'schema' => array( $this, 'get_public_item_schema' ),
+			)
+		);
 	}
 
 	/**
@@ -59,7 +63,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 				$post = get_post( $post_id );
 				if ( ! empty( $post_id ) && $post && ! $this->check_read_post_permission( $post ) ) {
 					return new WP_Error( 'rest_cannot_read_post', __( 'Sorry, you cannot read the post for this reaction.', 'react' ), array( 'status' => rest_authorization_required_code() ) );
-				} else if ( 0 === $post_id && ! current_user_can( 'moderate_comments' ) ) {
+				} elseif ( 0 === $post_id && ! current_user_can( 'moderate_comments' ) ) {
 					return new WP_Error( 'rest_cannot_read', __( 'Sorry, you cannot read reactions without a post.', 'react' ), array( 'status' => rest_authorization_required_code() ) );
 				}
 			}
@@ -76,7 +80,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	 */
 	public function get_items( $request ) {
 		$prepared_args = array(
-			'post__in' => $request['post'],
+			'post__in' => wp_parse_id_list( $request['post'] ),
 			'type'     => 'reaction',
 		);
 
@@ -90,7 +94,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 		 */
 		$prepared_args = apply_filters( 'rest_reaction_query', $prepared_args, $request );
 
-		$query = new WP_Comment_Query;
+		$query        = new WP_Comment_Query();
 		$query_result = $query->query( $prepared_args );
 
 		$reactions_count = array();
@@ -102,7 +106,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 				);
 			}
 
-			$reactions_count[ $reaction->comment_content ]++;
+			++$reactions_count[ $reaction->comment_content ]['count'];
 		}
 
 		$reactions = array();
@@ -113,7 +117,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 				'post_id' => $data['post_id'],
 			);
 
-			$data = $this->prepare_item_for_response( $reaction, $request );
+			$data        = $this->prepare_item_for_response( $reaction, $request );
 			$reactions[] = $this->prepare_response_for_collection( $data );
 		}
 
@@ -181,8 +185,8 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	/**
 	 * Prepare a reaction group output for response.
 	 *
-	 * @param  array            $reaction Reaction data.
-	 * @param  WP_REST_Request  $request  Request object.
+	 * @param  array           $reaction Reaction data.
+	 * @param  WP_REST_Request $request  Request object.
 	 * @return WP_REST_Response $response
 	 */
 	public function prepare_item_for_response( $reaction, $request ) {
@@ -206,7 +210,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 		 * @param array             $reaction   The original reaction data.
 		 * @param WP_REST_Request   $request    Request used to generate the response.
 		 */
-		return apply_filters( 'rest_prepare_comment', $response, $reaction, $request );
+		return apply_filters( 'rest_prepare_reaction', $response, $reaction, $request );
 	}
 
 	/**
@@ -220,7 +224,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 			return $response;
 		}
 
-		$data = (array) $response->get_data();
+		$data  = (array) $response->get_data();
 		$links = WP_REST_Server::get_response_links( $response );
 		if ( ! empty( $links ) ) {
 			$data['_links'] = $links;
@@ -237,7 +241,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	 */
 	protected function prepare_links( $reaction ) {
 		$links = array(
-			'self' => array(
+			'self'       => array(
 				'href' => rest_url( sprintf( '/%s/%s/%s', $this->namespace, $this->rest_base, $reaction['emoji'] ) ),
 			),
 			'collection' => array(
@@ -248,8 +252,8 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 		if ( 0 !== (int) $reaction['post_id'] ) {
 			$post = get_post( $reaction['post_id'] );
 			if ( ! empty( $post->ID ) ) {
-				$obj = get_post_type_object( $post->post_type );
-				$base = ! empty( $obj->rest_base ) ? $obj->rest_base : $obj->name;
+				$obj         = get_post_type_object( $post->post_type );
+				$base        = ! empty( $obj->rest_base ) ? $obj->rest_base : $obj->name;
 				$links['up'] = array(
 					'href'       => rest_url( '/wp/v2/' . $base . '/' . $reaction['post_id'] ),
 					'embeddable' => true,
@@ -269,7 +273,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	public function get_collection_params() {
 		$query_params = array();
 
-		$query_params['post']   = array(
+		$query_params['post'] = array(
 			'default'           => array(),
 			'description'       => __( 'Limit result set to resources assigned to specific post ids.', 'react' ),
 			'type'              => 'array',
@@ -287,18 +291,20 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	public function get_creation_params() {
 		$query_params = array();
 
-		$query_params['post']   = array(
-			'default'           => array(),
+		$query_params['post'] = array(
+			'required'          => true,
 			'description'       => __( 'The post ID to add a reaction to.', 'react' ),
 			'type'              => 'integer',
+			'minimum'           => 1,
 			'sanitize_callback' => 'absint',
 			'validate_callback' => 'rest_validate_request_arg',
 		);
 
-		$query_params['emoji']  = array(
-			'default'           => array(),
+		$query_params['emoji'] = array(
+			'required'          => true,
 			'description'       => __( 'The reaction emoji.', 'react' ),
 			'type'              => 'string',
+			'minLength'         => 1,
 			'validate_callback' => 'rest_validate_request_arg',
 		);
 

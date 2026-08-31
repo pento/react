@@ -5,13 +5,16 @@ if ( ! $_tests_dir ) {
 	$_tests_dir = '/tmp/wordpress-tests-lib';
 }
 
+if ( file_exists( dirname( __FILE__ ) . '/../vendor/autoload.php' ) ) {
+	require_once dirname( __FILE__ ) . '/../vendor/autoload.php';
+}
+
 require_once( $_tests_dir . '/includes/functions.php' );
 
 /**
  * Load the plugin.
  */
 function _manually_load_react_plugin() {
-	require_once( dirname( __FILE__ ) . '/../vendor/json-rest-api/plugin.php' );
 	require_once( dirname( __FILE__ ) . '/../react.php' );
 }
 
