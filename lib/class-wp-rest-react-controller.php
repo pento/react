@@ -1,6 +1,6 @@
 <?php
 /**
- * Class WP_REST_React_Controller
+ * REST API controller for reactions.
  *
  * @package react
  */

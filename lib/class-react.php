@@ -1,6 +1,6 @@
 <?php
 /**
- * Class React
+ * Front-end integration for the Reactions plugin.
  *
  * @package react
  */
@@ -61,8 +61,8 @@ class React {
 				window.wp = window.wp || {};
 				window.wp.react = window.wp.react || {};
 				window.wp.react.settings = {
-					emoji_url: '<?php echo esc_url( REACT_URL . '/static/emoji.json' ); ?>',
-					endpoint:  '<?php echo esc_url( get_rest_url( null, $this->api->namespace . '/' . $this->api->rest_base ) ); ?>'
+					emoji_url: <?php echo wp_json_encode( esc_url_raw( REACT_URL . '/static/emoji.json' ) ); ?>,
+					endpoint:  <?php echo wp_json_encode( esc_url_raw( get_rest_url( null, $this->api->namespace . '/' . $this->api->rest_base ) ) ); ?>
 				}
 			</script>
 		<?php
