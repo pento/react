@@ -50,6 +50,11 @@
 
 		event = event || window.event;
 
+		// Only the primary (usually left) mouse button should add a reaction.
+		if ( 'button' in event && 0 !== event.button ) {
+			return;
+		}
+
 		const el = event.target || event.srcElement;
 
 		let parent = el;
