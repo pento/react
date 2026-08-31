@@ -16,6 +16,7 @@ define( 'REACT_VERSION', '0.1' );
  */
 function react_load() {
 	if ( ! class_exists( 'WP_REST_Posts_Controller' ) ) {
+		add_action( 'admin_notices', 'react_rest_api_missing_notice' );
 		return;
 	}
 
@@ -29,3 +30,17 @@ function react_load() {
 }
 
 add_action( 'plugins_loaded', 'react_load' );
+
+/**
+ * Warns the site admin that Reactions can't run without the REST API.
+ */
+function react_rest_api_missing_notice() {
+	if ( ! current_user_can( 'activate_plugins' ) ) {
+		return;
+	}
+
+	printf(
+		'<div class="notice notice-error"><p>%s</p></div>',
+		esc_html__( 'The Reactions plugin requires the WordPress REST API, which does not appear to be available. Reactions will not be displayed until it is.', 'react' )
+	);
+}
