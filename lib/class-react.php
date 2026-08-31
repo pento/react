@@ -35,6 +35,9 @@ class React {
 		add_action( 'wp_footer', array( $this, 'print_selector' ) );
 
 		add_filter( 'the_content', array( $this, 'the_content' ) );
+
+		add_filter( 'comments_template_query_args', array( $this, 'exclude_reactions_from_comments_template' ) );
+		add_filter( 'get_comments_number', array( $this, 'exclude_reactions_from_comments_number' ), 10, 2 );
 	}
 
 	/**
@@ -117,6 +120,43 @@ class React {
 		}
 		$content .= '</div>';
 		return $content;
+	}
+
+	/**
+	 * Exclude reactions from the theme's main comment list query.
+	 *
+	 * Reactions are already displayed via the_content(); showing them again
+	 * in the regular comment list is redundant.
+	 *
+	 * @param array $comment_args Arguments for the comments_template() query.
+	 * @return array Filtered arguments.
+	 */
+	public function exclude_reactions_from_comments_template( $comment_args ) {
+		$comment_args['type__not_in'] = array_merge(
+			isset( $comment_args['type__not_in'] ) ? (array) $comment_args['type__not_in'] : array(),
+			array( 'reaction' )
+		);
+
+		return $comment_args;
+	}
+
+	/**
+	 * Exclude reactions from the post's displayed comment count.
+	 *
+	 * @param int $count   The number of comments the post has.
+	 * @param int $post_id The post ID.
+	 * @return int Filtered comment count.
+	 */
+	public function exclude_reactions_from_comments_number( $count, $post_id ) {
+		$reaction_count = get_comments(
+			array(
+				'post_id' => $post_id,
+				'type'    => 'reaction',
+				'count'   => true,
+			)
+		);
+
+		return max( 0, (int) $count - (int) $reaction_count );
 	}
 
 	/**

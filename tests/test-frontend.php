@@ -81,4 +81,42 @@ class React_Test_Frontend extends WP_UnitTestCase {
 
 		$this->assertGreaterThanOrEqual( 0, strpos( '<div class="emoji-reaction-selector"', $footer ) );
 	}
+
+	/**
+	 * Test that reactions are excluded from the theme's main comment list query.
+	 */
+	public function test_reactions_excluded_from_comments_template_query() {
+		$react = React::init();
+
+		$args = $react->exclude_reactions_from_comments_template( array() );
+
+		$this->assertContains( 'reaction', $args['type__not_in'] );
+	}
+
+	/**
+	 * Test that reactions don't inflate the post's displayed comment count.
+	 */
+	public function test_reactions_excluded_from_comments_number() {
+		$post_id = $this->factory->post->create();
+
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'comment',
+				'comment_approved' => 1,
+			)
+		);
+
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_approved' => 1,
+			)
+		);
+
+		$react = React::init();
+
+		$this->assertEquals( 1, $react->exclude_reactions_from_comments_number( 2, $post_id ) );
+	}
 }
