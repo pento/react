@@ -62,11 +62,11 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		wp_head();
 		$head = ob_get_clean();
 
-		$this->assertEquals( 1, preg_match( "/emoji_url: '[^']*emoji.json'/", $head ) );
+		$this->assertEquals( 1, preg_match( '/emoji_url: "[^"]*emoji\.json"/', $head ) );
 	}
 
 	/**
-	 * Test that the reaction selector markup is added to the footer.
+	 * Test that the reaction selector template is added to the footer.
 	 */
 	public function test_selector_in_footer() {
 		$post_id = $this->factory->post->create();
@@ -79,6 +79,7 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		wp_footer();
 		$footer = ob_get_clean();
 
-		$this->assertGreaterThanOrEqual( 0, strpos( '<div class="emoji-reaction-selector"', $footer ) );
+		$this->assertStringContainsString( 'id="tmpl-emoji-reaction-selector"', $footer );
+		$this->assertStringContainsString( 'id="emoji-reaction-selector"', $footer );
 	}
 }
