@@ -1,13 +1,19 @@
 <?php
-/*
-Plugin Name: React
-Description: 💩 Reactions.
-Version: 0.1
-Text Domain: react
-*/
+/**
+ * Plugin Name: React
+ * Description: 💩 Reactions.
+ * Version: 0.1
+ * Text Domain: react
+ *
+ * @package react
+ */
 
 define( 'REACT_URL', plugins_url( '', __FILE__ ) );
+define( 'REACT_VERSION', '0.1' );
 
+/**
+ * Loads the plugin, once WP_REST_Posts_Controller is available.
+ */
 function react_load() {
 	if ( ! class_exists( 'WP_REST_Posts_Controller' ) ) {
 		return;
