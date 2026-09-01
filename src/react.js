@@ -51,7 +51,16 @@ const reactionClick = function ( event ) {
 	}
 
 	if ( ! parent ) {
-		hideReactionPicker();
+		// A click inside the picker's own shadow DOM (e.g. a category tab
+		// or the search box) still bubbles up here, but the DOM retargets
+		// its event.target to the <emoji-picker> host element itself for
+		// listeners outside the shadow tree -- so it looks identical to a
+		// click landing directly on the picker. Only treat this as an
+		// outside click, and dismiss the picker, when it's neither of
+		// those.
+		if ( ! picker || event.target !== picker ) {
+			hideReactionPicker();
+		}
 		return;
 	}
 

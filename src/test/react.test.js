@@ -96,6 +96,15 @@ beforeAll( () => {
 
 beforeEach( () => {
 	MockXHR.instances = [];
+
+	// The <emoji-picker> element is a lazily-created singleton, reused
+	// across tests once a prior test has opened it -- reset it closed so
+	// each test starts from a known state regardless of how the previous
+	// one left it.
+	const picker = document.querySelector( 'emoji-picker' );
+	if ( picker ) {
+		picker.style.display = 'none';
+	}
 } );
 
 test( "clicking a reaction bubble POSTs the reaction to the REST endpoint, including this browser's anonymous client id", () => {
@@ -184,6 +193,38 @@ test( 'the add-reaction button creates and shows an <emoji-picker>, pointed at t
 
 	// Clicking the add button again, while the picker is open, closes it.
 	click( addButton );
+	expect( picker.style.display ).toBe( 'none' );
+} );
+
+test( "clicking inside the picker's own UI (e.g. a category tab) doesn't dismiss it", () => {
+	const addButton = document.querySelector( '.emoji-reaction-add' );
+
+	click( addButton );
+
+	const picker = document.querySelector( 'emoji-picker' );
+	expect( picker.style.display ).toBe( 'block' );
+
+	// A click on something inside the picker's shadow DOM (a category
+	// tab, the search box, etc.) still bubbles up to the document, but
+	// the DOM retargets its event.target to the <emoji-picker> host
+	// element itself for listeners outside the shadow tree -- dispatching
+	// directly on the picker reproduces that retargeting without needing
+	// a real shadow root.
+	click( picker );
+
+	expect( picker.style.display ).toBe( 'block' );
+} );
+
+test( 'clicking elsewhere on the page, outside the picker, does dismiss it', () => {
+	const addButton = document.querySelector( '.emoji-reaction-add' );
+
+	click( addButton );
+
+	const picker = document.querySelector( 'emoji-picker' );
+	expect( picker.style.display ).toBe( 'block' );
+
+	click( document.body );
+
 	expect( picker.style.display ).toBe( 'none' );
 } );
 
