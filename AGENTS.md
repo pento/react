@@ -52,6 +52,10 @@ vendor/bin/phpunit
 
 `tests/bootstrap.php` reads `WP_TESTS_DIR` (defaults to `/tmp/wordpress-tests-lib`) and loads the plugin via `_manually_load_react_plugin()`. If that environment isn't available, say so explicitly rather than claiming test coverage you didn't actually verify — `php -l` and `composer lint:php`/`npm run lint` are not a substitute for actually running the suite.
 
+`static/react.js` has a small JS test suite (`static/test/react.test.js`), run via `npm run test:unit` (`@wordpress/scripts`' `test-unit-js`, i.e. Jest + jsdom). Since `static/react.js` is a non-modular IIFE with nothing exported, tests require it fresh with `window.wp.react.settings`/DOM fixtures already in place and drive it like a browser would (dispatched events), rather than importing individual functions.
+
+All of `composer lint:php`, `vendor/bin/phpunit`, `npm run lint`, and `npm run test:unit` run in GitHub Actions (`.github/workflows/ci.yml`) on every push/PR.
+
 ## Conventions
 
 - PHP follows WordPress-Docs/Core/Extra coding standards (tabs, Yoda conditions, full docblocks on non-test functions/methods, `esc_*()`/`wp_json_encode()` at every output boundary). Run `composer lint:php` before considering PHP work done.
