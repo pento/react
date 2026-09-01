@@ -11,6 +11,13 @@
 class React {
 
 	/**
+	 * The comment_type reactions are stored under.
+	 *
+	 * @var string
+	 */
+	const COMMENT_TYPE = 'reaction';
+
+	/**
 	 * API endpoints
 	 *
 	 * @var WP_REST_React_Controller
@@ -93,7 +100,7 @@ class React {
 		$reactions = get_comments(
 			array(
 				'post_id' => $post_id,
-				'type'    => 'reaction',
+				'type'    => self::COMMENT_TYPE,
 			)
 		);
 
@@ -149,12 +156,12 @@ class React {
 			isset( $query->query_vars['type__in'] ) ? (array) $query->query_vars['type__in'] : array()
 		);
 
-		if ( in_array( 'reaction', $requested_types, true ) ) {
+		if ( in_array( self::COMMENT_TYPE, $requested_types, true ) ) {
 			return $clauses;
 		}
 
 		global $wpdb;
-		$clauses['where'] .= $wpdb->prepare( " AND {$wpdb->comments}.comment_type != %s", 'reaction' );
+		$clauses['where'] .= $wpdb->prepare( " AND {$wpdb->comments}.comment_type != %s", self::COMMENT_TYPE );
 
 		return $clauses;
 	}
@@ -201,7 +208,7 @@ class React {
 		$count = (int) get_comments(
 			array(
 				'post_id' => $post_id,
-				'type'    => 'reaction',
+				'type'    => self::COMMENT_TYPE,
 				'count'   => true,
 			)
 		);
@@ -218,7 +225,7 @@ class React {
 	 * @param WP_Comment $comment The comment object.
 	 */
 	public function invalidate_reaction_count_cache( $id, $comment ) {
-		if ( 'reaction' !== $comment->comment_type ) {
+		if ( self::COMMENT_TYPE !== $comment->comment_type ) {
 			return;
 		}
 
