@@ -170,7 +170,18 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 			'comment_type'    => React::COMMENT_TYPE,
 		);
 
-		wp_insert_comment( $comment );
+		$comment_id = wp_insert_comment( $comment );
+
+		if ( false !== $comment_id ) {
+			/**
+			 * Fires after a reaction has been created.
+			 *
+			 * @param int    $comment_id The new reaction's comment ID.
+			 * @param int    $post_id    The post the reaction was added to.
+			 * @param string $emoji      The reaction emoji.
+			 */
+			do_action( 'react_reaction_created', $comment_id, (int) $request['post'], $request['emoji'] );
+		}
 
 		return $this->get_items( $request );
 	}
