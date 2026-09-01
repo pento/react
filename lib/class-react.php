@@ -66,7 +66,8 @@ class React {
 				window.wp.react = window.wp.react || {};
 				window.wp.react.settings = {
 					emoji_url: <?php echo wp_json_encode( esc_url_raw( REACT_URL . '/static/emoji.json' ) ); ?>,
-					endpoint:  <?php echo wp_json_encode( esc_url_raw( get_rest_url( null, $this->api->namespace . '/' . $this->api->rest_base ) ) ); ?>
+					endpoint:  <?php echo wp_json_encode( esc_url_raw( get_rest_url( null, $this->api->namespace . '/' . $this->api->rest_base ) ) ); ?>,
+					nonce:     <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?>
 				}
 			</script>
 		<?php
@@ -112,7 +113,14 @@ class React {
 		$content .= '<div class="emoji-reactions">';
 
 		foreach ( $reactions_summary as $emoji => $count ) {
-			$content .= "<div data-emoji='$emoji' data-count='$count' data-post='$post_id' class='emoji-reaction'><div class='emoji'>$emoji</div><div class='count'>$count</div></div>";
+			$content .= sprintf(
+				"<div data-emoji='%s' data-count='%d' data-post='%d' class='emoji-reaction'><div class='emoji'>%s</div><div class='count'>%d</div></div>",
+				esc_attr( $emoji ),
+				$count,
+				$post_id,
+				esc_html( $emoji ),
+				$count
+			);
 		}
 
 		if ( comments_open( $post_id ) ) {
