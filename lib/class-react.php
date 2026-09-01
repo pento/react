@@ -25,6 +25,8 @@ class React {
 
 		add_action( 'rest_api_init', array( $this->api, 'register_routes' ) );
 		add_action( 'wp_insert_comment', array( $this, 'invalidate_reaction_count_cache' ), 10, 2 );
+		add_action( 'deleted_comment', array( $this, 'invalidate_reaction_count_cache' ), 10, 2 );
+		add_action( 'transition_comment_status', array( $this, 'invalidate_reaction_count_cache_on_status_change' ), 10, 3 );
 
 		if ( is_admin() ) {
 			return;
@@ -178,8 +180,11 @@ class React {
 	 * This runs on every call to get_comments_number(), which can mean once
 	 * per post on an archive page -- caching this avoids a COUNT query per
 	 * post per page load.
-	 * The cache is invalidated in invalidate_reaction_count_cache() whenever
-	 * a new reaction comment is inserted.
+	 * The cache is invalidated in invalidate_reaction_count_cache() and
+	 * invalidate_reaction_count_cache_on_status_change() whenever a reaction
+	 * comment is inserted, deleted, or changes status (e.g. trashed,
+	 * spammed, or un/approved), and otherwise expires after an hour as a
+	 * safety net against any invalidation path this doesn't cover.
 	 *
 	 * @param int $post_id The post ID.
 	 * @return int Number of reactions the post has.
@@ -200,13 +205,14 @@ class React {
 			)
 		);
 
-		wp_cache_set( $post_id, $count, 'react_reaction_counts' );
+		wp_cache_set( $post_id, $count, 'react_reaction_counts', '', HOUR_IN_SECONDS );
 
 		return $count;
 	}
 
 	/**
-	 * Invalidate the cached reaction count for a post when a reaction is added.
+	 * Invalidate the cached reaction count for a post when a reaction is
+	 * added or deleted.
 	 *
 	 * @param int        $id      The comment ID.
 	 * @param WP_Comment $comment The comment object.
@@ -217,6 +223,19 @@ class React {
 		}
 
 		wp_cache_delete( (int) $comment->comment_post_ID, 'react_reaction_counts' );
+	}
+
+	/**
+	 * Invalidate the cached reaction count for a post when a reaction's
+	 * comment status changes -- e.g. approved, unapproved, spammed, or
+	 * trashed, including via bulk moderation actions in wp-admin.
+	 *
+	 * @param string     $new_status The new comment status.
+	 * @param string     $old_status The old comment status.
+	 * @param WP_Comment $comment    The comment object.
+	 */
+	public function invalidate_reaction_count_cache_on_status_change( $new_status, $old_status, $comment ) {
+		$this->invalidate_reaction_count_cache( $comment->comment_ID, $comment );
 	}
 
 	/**
