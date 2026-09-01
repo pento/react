@@ -83,14 +83,58 @@ class React_Test_Frontend extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test that reactions are excluded from the theme's main comment list query.
+	 * Test that a default comment query excludes reactions.
 	 */
-	public function test_reactions_excluded_from_comments_template_query() {
-		$react = React::init();
+	public function test_reactions_excluded_from_default_comment_query() {
+		React::init();
 
-		$args = $react->exclude_reactions_from_comments_template( array() );
+		$post_id = $this->factory->post->create();
 
-		$this->assertContains( 'reaction', $args['type__not_in'] );
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_approved' => 1,
+			)
+		);
+
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_approved' => 1,
+			)
+		);
+
+		$comments = get_comments( array( 'post_id' => $post_id ) );
+
+		$this->assertCount( 1, $comments );
+		$this->assertNotEquals( 'reaction', $comments[0]->comment_type );
+	}
+
+	/**
+	 * Test that a query explicitly asking for reactions still finds them.
+	 */
+	public function test_reactions_still_queryable_explicitly() {
+		React::init();
+
+		$post_id = $this->factory->post->create();
+
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_approved' => 1,
+			)
+		);
+
+		$comments = get_comments(
+			array(
+				'post_id' => $post_id,
+				'type'    => 'reaction',
+			)
+		);
+
+		$this->assertCount( 1, $comments );
 	}
 
 	/**
@@ -102,7 +146,6 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		$this->factory->comment->create(
 			array(
 				'comment_post_ID'  => $post_id,
-				'comment_type'     => 'comment',
 				'comment_approved' => 1,
 			)
 		);
@@ -118,5 +161,15 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		$react = React::init();
 
 		$this->assertEquals( 1, $react->exclude_reactions_from_comments_number( 2, $post_id ) );
+	}
+
+	/**
+	 * Test that an empty post ID is left untouched, rather than triggering a
+	 * site-wide reaction count.
+	 */
+	public function test_comments_number_unchanged_for_empty_post_id() {
+		$react = React::init();
+
+		$this->assertEquals( 2, $react->exclude_reactions_from_comments_number( 2, 0 ) );
 	}
 }

@@ -36,7 +36,7 @@ class React {
 
 		add_filter( 'the_content', array( $this, 'the_content' ) );
 
-		add_filter( 'comments_template_query_args', array( $this, 'exclude_reactions_from_comments_template' ) );
+		add_filter( 'comments_clauses', array( $this, 'exclude_reactions_from_comments_clauses' ), 10, 2 );
 		add_filter( 'get_comments_number', array( $this, 'exclude_reactions_from_comments_number' ), 10, 2 );
 	}
 
@@ -123,21 +123,35 @@ class React {
 	}
 
 	/**
-	 * Exclude reactions from the theme's main comment list query.
+	 * Exclude reactions from any comment query that isn't explicitly asking for them.
 	 *
 	 * Reactions are already displayed via the_content(); showing them again
-	 * in the regular comment list is redundant.
+	 * in the regular comment list, a comment feed, or something like the
+	 * Recent Comments widget is redundant. Filtering at the SQL clause level
+	 * (rather than e.g. comments_template_query_args, which only covers the
+	 * theme's main comment-list query) means every one of those surfaces is
+	 * covered, without needing to special-case each of them individually.
+	 * A query that explicitly asks for the reaction type -- including this
+	 * plugin's own queries -- is left untouched.
 	 *
-	 * @param array $comment_args Arguments for the comments_template() query.
-	 * @return array Filtered arguments.
+	 * @param array            $clauses SQL clauses for the comment query.
+	 * @param WP_Comment_Query $query   The query object.
+	 * @return array Filtered clauses.
 	 */
-	public function exclude_reactions_from_comments_template( $comment_args ) {
-		$comment_args['type__not_in'] = array_merge(
-			isset( $comment_args['type__not_in'] ) ? (array) $comment_args['type__not_in'] : array(),
-			array( 'reaction' )
+	public function exclude_reactions_from_comments_clauses( $clauses, $query ) {
+		$requested_types = array_merge(
+			isset( $query->query_vars['type'] ) ? (array) $query->query_vars['type'] : array(),
+			isset( $query->query_vars['type__in'] ) ? (array) $query->query_vars['type__in'] : array()
 		);
 
-		return $comment_args;
+		if ( in_array( 'reaction', $requested_types, true ) ) {
+			return $clauses;
+		}
+
+		global $wpdb;
+		$clauses['where'] .= $wpdb->prepare( " AND {$wpdb->comments}.comment_type != %s", 'reaction' );
+
+		return $clauses;
 	}
 
 	/**
@@ -148,6 +162,10 @@ class React {
 	 * @return int Filtered comment count.
 	 */
 	public function exclude_reactions_from_comments_number( $count, $post_id ) {
+		if ( empty( $post_id ) ) {
+			return $count;
+		}
+
 		$reaction_count = get_comments(
 			array(
 				'post_id' => $post_id,
