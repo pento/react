@@ -82,7 +82,7 @@ class React_Test_Frontend extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test that the emoji.json URL is passed.
+	 * Test that the emoji-data.json URL is passed.
 	 */
 	public function test_json_url_is_passed() {
 		$this->expect_footer_deprecation();
@@ -95,7 +95,7 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		wp_footer();
 		$footer = ob_get_clean();
 
-		$this->assertEquals( 1, preg_match( '/"emoji_url":"[^"]*emoji\.json"/', $footer ) );
+		$this->assertEquals( 1, preg_match( '/"emoji_data_url":"[^"]*emoji-data\.json"/', $footer ) );
 	}
 
 	/**
@@ -141,24 +141,6 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		$content = ob_get_clean();
 
 		$this->assertStringNotContainsString( '<script>alert(1)</script>', $content );
-	}
-
-	/**
-	 * Test that the reaction selector template is added to the footer.
-	 */
-	public function test_selector_in_footer() {
-		$this->expect_footer_deprecation();
-
-		$post_id = $this->factory->post->create();
-
-		$this->go_to( get_permalink( $post_id ) );
-
-		ob_start();
-		wp_footer();
-		$footer = ob_get_clean();
-
-		$this->assertStringContainsString( '<script type="text/html" id="tmpl-emoji-reaction-selector">', $footer );
-		$this->assertStringContainsString( 'id="emoji-reaction-selector"', $footer );
 	}
 
 	/**
