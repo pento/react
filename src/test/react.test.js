@@ -196,6 +196,40 @@ test( 'the add-reaction button creates and shows an <emoji-picker>, pointed at t
 	expect( picker.style.display ).toBe( 'none' );
 } );
 
+test( 'positions the picker inline on desktop, but leaves positioning to CSS on narrow screens', () => {
+	const addButton = document.querySelector( '.emoji-reaction-add' );
+	const picker = document.querySelector( 'emoji-picker' );
+	const originalClientWidth = document.documentElement.clientWidth;
+
+	try {
+		Object.defineProperty( document.documentElement, 'clientWidth', {
+			configurable: true,
+			value: 1024,
+		} );
+		click( addButton );
+		expect( picker.style.top ).not.toBe( '' );
+		expect( picker.style.left ).not.toBe( '' );
+		click( addButton ); // close it again
+
+		// Below 768px, static/react.css switches the picker to a fixed
+		// bottom sheet (position: fixed; left: 0; bottom: 0) -- setting
+		// inline left/top here would override that regardless of the
+		// media query, and risk an off-screen negative top besides.
+		Object.defineProperty( document.documentElement, 'clientWidth', {
+			configurable: true,
+			value: 375,
+		} );
+		click( addButton );
+		expect( picker.style.top ).toBe( '' );
+		expect( picker.style.left ).toBe( '' );
+	} finally {
+		Object.defineProperty( document.documentElement, 'clientWidth', {
+			configurable: true,
+			value: originalClientWidth,
+		} );
+	}
+} );
+
 test( "clicking inside the picker's own UI (e.g. a category tab) doesn't dismiss it", () => {
 	const addButton = document.querySelector( '.emoji-reaction-add' );
 

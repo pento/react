@@ -133,20 +133,32 @@ const showReactionPicker = function ( el ) {
 
 	thePicker.dataset.post = el.dataset.post;
 
-	let left = 0;
-	let top = 0;
-	let parent = el;
+	// Below 768px, static/react.css switches the picker to a fixed
+	// bottom sheet (position: fixed; left: 0; bottom: 0). Leave that
+	// alone rather than fighting it with inline positioning -- an
+	// inline style always wins over a stylesheet rule regardless of the
+	// media query, so setting left/top here would both override the
+	// bottom-sheet placement and risk an off-screen negative top.
+	if ( document.documentElement.clientWidth > 768 ) {
+		let left = 0;
+		let top = 0;
+		let parent = el;
 
-	while ( parent ) {
-		left += parent.offsetLeft;
-		top += parent.offsetTop;
-		parent = parent.offsetParent;
+		while ( parent ) {
+			left += parent.offsetLeft;
+			top += parent.offsetTop;
+			parent = parent.offsetParent;
+		}
+
+		top -= 300;
+
+		thePicker.style.left = left + 'px';
+		thePicker.style.top = top + 'px';
+	} else {
+		thePicker.style.left = '';
+		thePicker.style.top = '';
 	}
 
-	top -= 300;
-
-	thePicker.style.left = left + 'px';
-	thePicker.style.top = top + 'px';
 	thePicker.style.display = 'block';
 };
 
