@@ -1,4 +1,21 @@
 <?php
+/**
+ * Regenerates static/emoji.json (the compact, categorized emoji data
+ * static/react.js actually loads) from the upstream iamcal/emoji-data
+ * project.
+ *
+ * This is a standalone, manual/offline step -- it's not run by any
+ * npm/composer script automatically as part of installing, building, or
+ * testing the plugin, and it isn't part of the plugin's runtime. It's a
+ * one-off CLI script: `php tools/compile_emoji.php`, or `composer
+ * compile-emoji`.
+ *
+ * Re-run it whenever the upstream emoji-data project adds/changes emoji
+ * (e.g. after a new Unicode emoji release, or when WordPress core bumps
+ * the version of Twemoji it ships, since this filters to only emoji
+ * Twemoji actually has images for).
+ */
+
 // Compile emoji data list into an autocompleteable list
 
 $contents = file_get_contents( 'https://raw.githubusercontent.com/iamcal/emoji-data/master/emoji.json' );
