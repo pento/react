@@ -86,7 +86,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	public function get_items( $request ) {
 		$prepared_args = array(
 			'post__in' => wp_parse_id_list( $request['post'] ),
-			'type'     => 'reaction',
+			'type'     => React::COMMENT_TYPE,
 		);
 
 		/**
@@ -167,7 +167,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 		$comment = array(
 			'comment_content' => $request['emoji'],
 			'comment_post_ID' => $request['post'],
-			'comment_type'    => 'reaction',
+			'comment_type'    => React::COMMENT_TYPE,
 		);
 
 		wp_insert_comment( $comment );
