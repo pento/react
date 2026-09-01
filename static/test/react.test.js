@@ -109,7 +109,7 @@ beforeEach( () => {
 	MockXHR.instances = [];
 } );
 
-test( 'clicking a reaction bubble POSTs the reaction to the REST endpoint', () => {
+test( 'clicking a reaction bubble POSTs the reaction to the REST endpoint, including this browser\'s anonymous client id', () => {
 	const bubble = document.querySelector( '.emoji-reaction' );
 
 	click( bubble );
@@ -123,9 +123,63 @@ test( 'clicking a reaction bubble POSTs the reaction to the REST endpoint', () =
 		'application/x-www-form-urlencoded'
 	);
 	expect( request.requestHeaders[ 'X-WP-Nonce' ] ).toBe( SETTINGS.nonce );
+
+	const clientId = window.localStorage.getItem( 'wp-react-client-id' );
+	expect( clientId ).toEqual( expect.any( String ) );
 	expect( request.body ).toBe(
-		'post=42&emoji=' + encodeURIComponent( '😀' )
+		'post=42&emoji=' +
+			encodeURIComponent( '😀' ) +
+			'&client_id=' +
+			encodeURIComponent( clientId )
 	);
+} );
+
+test( 'the anonymous client id is stable across multiple reactions', () => {
+	const bubble = document.querySelector( '.emoji-reaction' );
+
+	click( bubble );
+	click( bubble );
+
+	expect( MockXHR.instances ).toHaveLength( 2 );
+
+	const clientId = window.localStorage.getItem( 'wp-react-client-id' );
+	expect( MockXHR.instances[ 0 ].body ).toContain(
+		'client_id=' + encodeURIComponent( clientId )
+	);
+	expect( MockXHR.instances[ 1 ].body ).toContain(
+		'client_id=' + encodeURIComponent( clientId )
+	);
+} );
+
+test( 'reacting still POSTs, without a client id, when localStorage is unavailable', () => {
+	const { localStorage } = window;
+	Object.defineProperty( window, 'localStorage', {
+		configurable: true,
+		value: {
+			getItem: () => {
+				throw new Error( 'localStorage disabled' );
+			},
+			setItem: () => {
+				throw new Error( 'localStorage disabled' );
+			},
+		},
+	} );
+
+	try {
+		const bubble = document.querySelector( '.emoji-reaction' );
+
+		click( bubble );
+
+		expect( MockXHR.instances ).toHaveLength( 1 );
+		expect( MockXHR.instances[ 0 ].body ).toBe(
+			'post=42&emoji=' + encodeURIComponent( '😀' )
+		);
+	} finally {
+		Object.defineProperty( window, 'localStorage', {
+			configurable: true,
+			value: localStorage,
+		} );
+	}
 } );
 
 test( 'the add-reaction button opens the popup on the first tab, switching tabs shows only that tab, and a second click closes the popup', () => {

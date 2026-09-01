@@ -375,6 +375,61 @@
 	};
 
 	/**
+	 * The localStorage key used to persist this browser's anonymous
+	 * reaction identifier.
+	 *
+	 * @type {string}
+	 */
+	const CLIENT_ID_STORAGE_KEY = 'wp-react-client-id';
+
+	/**
+	 * Generate a v4-ish GUID using Math.random().
+	 *
+	 * Not cryptographically strong, and deliberately not using
+	 * crypto.randomUUID() -- this file supports browsers old enough to
+	 * lack document.addEventListener() (see usesLegacyEventModel above),
+	 * so it sticks to APIs already relied on elsewhere in this file.
+	 *
+	 * @return {string} A GUID-shaped random string.
+	 */
+	const generateGuid = function () {
+		let guid = '';
+		let ii;
+		let segment;
+		for ( ii = 0; ii < 32; ii++ ) {
+			segment = Math.floor( Math.random() * 16 );
+			if ( 8 === ii || 12 === ii || 16 === ii || 20 === ii ) {
+				guid += '-';
+			}
+			guid += segment.toString( 16 );
+		}
+		return guid;
+	};
+
+	/**
+	 * Get this browser's anonymous reaction identifier from localStorage,
+	 * generating and persisting one on first use.
+	 *
+	 * Deliberately kept in localStorage rather than a cookie so it's never
+	 * sent to the server except on an actual reaction request.
+	 *
+	 * @return {string|null} The client id, or null if localStorage isn't
+	 *                        available (e.g. disabled or private browsing).
+	 */
+	const getClientId = function () {
+		try {
+			let id = window.localStorage.getItem( CLIENT_ID_STORAGE_KEY );
+			if ( ! id ) {
+				id = generateGuid();
+				window.localStorage.setItem( CLIENT_ID_STORAGE_KEY, id );
+			}
+			return id;
+		} catch {
+			return null;
+		}
+	};
+
+	/**
 	 * Send a reaction message back to the server
 	 *
 	 * @param {HTMLElement} el The button that was clicked
@@ -388,11 +443,16 @@
 			post = el.parentElement.parentElement.dataset.post;
 		}
 
-		const params =
+		let params =
 			'post=' +
 			encodeURIComponent( post ) +
 			'&emoji=' +
 			encodeURIComponent( el.dataset.emoji );
+
+		const clientId = getClientId();
+		if ( clientId ) {
+			params += '&client_id=' + encodeURIComponent( clientId );
+		}
 
 		const xhr = new XMLHttpRequest();
 

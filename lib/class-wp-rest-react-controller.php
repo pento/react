@@ -158,21 +158,58 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	}
 
 	/**
-	 * Create a reaction.
+	 * Create a reaction, or remove it if the same user/visitor already
+	 * reacted with this emoji on this post.
 	 *
 	 * @param  WP_REST_Request $request Full details about the request.
 	 * @return WP_Error|WP_REST_Response
 	 */
 	public function create_item( $request ) {
+		$user_id   = get_current_user_id();
+		$client_id = isset( $request['client_id'] ) ? (string) $request['client_id'] : '';
+		$post_id   = (int) $request['post'];
+		$emoji     = $request['emoji'];
+
+		$existing_id = $this->find_own_reaction( $post_id, $emoji, $user_id, $client_id );
+
+		if ( $existing_id ) {
+			wp_delete_comment( $existing_id, true );
+
+			/**
+			 * Fires after a reaction has been removed by toggling it off.
+			 *
+			 * @param int    $comment_id The removed reaction's comment ID.
+			 * @param int    $post_id    The post the reaction was removed from.
+			 * @param string $emoji      The reaction emoji.
+			 */
+			do_action( 'react_reaction_removed', $existing_id, $post_id, $emoji );
+
+			return $this->get_items( $request );
+		}
+
 		$comment = array(
-			'comment_content' => $request['emoji'],
-			'comment_post_ID' => $request['post'],
+			'comment_post_ID' => $post_id,
+			'comment_content' => $emoji,
 			'comment_type'    => React::COMMENT_TYPE,
+			'user_id'         => $user_id,
 		);
+
+		if ( $user_id ) {
+			$user = get_userdata( $user_id );
+			if ( $user ) {
+				$comment['comment_author']       = $user->display_name;
+				$comment['comment_author_email'] = $user->user_email;
+				$comment['comment_author_url']   = $user->user_url;
+			}
+		}
 
 		$comment_id = wp_insert_comment( $comment );
 
 		if ( false !== $comment_id ) {
+			if ( ! $user_id && '' !== $client_id ) {
+				add_comment_meta( $comment_id, 'reaction_client_id', $client_id, true );
+			}
+
 			/**
 			 * Fires after a reaction has been created.
 			 *
@@ -180,10 +217,50 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 			 * @param int    $post_id    The post the reaction was added to.
 			 * @param string $emoji      The reaction emoji.
 			 */
-			do_action( 'react_reaction_created', $comment_id, (int) $request['post'], $request['emoji'] );
+			do_action( 'react_reaction_created', $comment_id, $post_id, $emoji );
 		}
 
 		return $this->get_items( $request );
+	}
+
+	/**
+	 * Find an existing reaction by the same user (or, for logged-out
+	 * visitors, the same client id) with the same emoji on the same post.
+	 *
+	 * @param  int    $post_id   The post ID.
+	 * @param  string $emoji     The reaction emoji.
+	 * @param  int    $user_id   The current user ID, or 0 if logged out.
+	 * @param  string $client_id Anonymous per-browser identifier, or '' if none was sent.
+	 * @return int The existing reaction's comment ID, or 0 if none was found.
+	 */
+	protected function find_own_reaction( $post_id, $emoji, $user_id, $client_id ) {
+		$args = array(
+			'post_id' => $post_id,
+			'type'    => React::COMMENT_TYPE,
+		);
+
+		if ( $user_id ) {
+			$args['user_id'] = $user_id;
+		} elseif ( '' !== $client_id ) {
+			$args['meta_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Reaction volume per post is small; there's no comment_content query arg to filter on instead.
+				array(
+					'key'   => 'reaction_client_id',
+					'value' => $client_id,
+				),
+			);
+		} else {
+			return 0;
+		}
+
+		$reactions = get_comments( $args );
+
+		foreach ( $reactions as $reaction ) {
+			if ( $reaction->comment_content === $emoji ) {
+				return (int) $reaction->comment_ID;
+			}
+		}
+
+		return 0;
 	}
 
 	/**
@@ -326,6 +403,14 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 			'validate_callback' => array( $this, 'validate_emoji' ),
 		);
 
+		$query_params['client_id'] = array(
+			'required'          => false,
+			'description'       => __( 'Anonymous per-browser identifier, used to let logged-out visitors toggle their own reactions.', 'react' ),
+			'type'              => 'string',
+			'sanitize_callback' => 'sanitize_text_field',
+			'validate_callback' => array( $this, 'validate_client_id' ),
+		);
+
 		return $query_params;
 	}
 
@@ -349,6 +434,32 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 			return new WP_Error(
 				'rest_invalid_emoji',
 				__( 'Sorry, that is not a recognized reaction emoji.', 'react' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Validate a submitted anonymous client id, rather than storing
+	 * arbitrary attacker-controlled strings as comment meta.
+	 *
+	 * @param mixed           $value   Value of the 'client_id' parameter.
+	 * @param WP_REST_Request $request The request object.
+	 * @param string          $param   The 'client_id' parameter name.
+	 * @return true|WP_Error
+	 */
+	public function validate_client_id( $value, $request, $param ) {
+		$valid = rest_validate_request_arg( $value, $request, $param );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( '' !== $value && ! preg_match( '/^[A-Za-z0-9-]{1,64}$/', $value ) ) {
+			return new WP_Error(
+				'rest_invalid_client_id',
+				__( 'Sorry, that is not a valid client id.', 'react' ),
 				array( 'status' => 400 )
 			);
 		}

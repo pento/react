@@ -56,6 +56,85 @@ class WP_Test_REST_Reactions_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertEquals( 1, $data[0]['count'] );
 	}
 
+	public function test_create_item_sets_comment_author_for_logged_in_user() {
+		$post_id = $this->factory->post->create();
+
+		$user_id = $this->factory->user->create(
+			array(
+				'role'         => 'administrator',
+				'display_name' => 'Jane Reactor',
+				'user_email'   => 'jane@example.com',
+			)
+		);
+		wp_set_current_user( $user_id );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/react' );
+		$request->set_param( 'post', $post_id );
+		$request->set_param( 'emoji', '😀' );
+		$this->server->dispatch( $request );
+
+		$comments = get_comments(
+			array(
+				'post_id' => $post_id,
+				'type'    => 'reaction',
+			)
+		);
+		$this->assertCount( 1, $comments );
+		$this->assertSame( $user_id, (int) $comments[0]->user_id );
+		$this->assertSame( 'Jane Reactor', $comments[0]->comment_author );
+		$this->assertSame( 'jane@example.com', $comments[0]->comment_author_email );
+	}
+
+	public function test_create_item_toggles_reaction_off() {
+		$post_id = $this->factory->post->create();
+
+		$user_id = $this->factory->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user_id );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/react' );
+		$request->set_param( 'post', $post_id );
+		$request->set_param( 'emoji', '😀' );
+
+		$first_response = $this->server->dispatch( $request );
+		$this->assertCount( 1, $first_response->get_data() );
+
+		$second_response = $this->server->dispatch( $request );
+		$this->assertCount( 0, $second_response->get_data() );
+
+		$comments = get_comments(
+			array(
+				'post_id' => $post_id,
+				'type'    => 'reaction',
+			)
+		);
+		$this->assertCount( 0, $comments );
+	}
+
+	public function test_create_item_toggles_anonymous_reaction_via_client_id() {
+		$post_id = $this->factory->post->create();
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/react' );
+		$request->set_param( 'post', $post_id );
+		$request->set_param( 'emoji', '😀' );
+		$request->set_param( 'client_id', 'client-one' );
+
+		$first_response = $this->server->dispatch( $request );
+		$this->assertCount( 1, $first_response->get_data() );
+
+		$second_response = $this->server->dispatch( $request );
+		$this->assertCount( 0, $second_response->get_data() );
+
+		// A different anonymous visitor reacting with the same emoji is independent.
+		$other_request = new WP_REST_Request( 'POST', '/wp/v2/react' );
+		$other_request->set_param( 'post', $post_id );
+		$other_request->set_param( 'emoji', '😀' );
+		$other_request->set_param( 'client_id', 'client-two' );
+
+		$other_response = $this->server->dispatch( $other_request );
+		$this->assertCount( 1, $other_response->get_data() );
+		$this->assertEquals( 1, $other_response->get_data()[0]['count'] );
+	}
+
 	public function test_create_item_rejects_non_whitelisted_emoji() {
 		$post_id = $this->factory->post->create();
 
