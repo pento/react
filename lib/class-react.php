@@ -113,10 +113,10 @@ class React {
 			++$reactions_summary[ $reaction->comment_content ];
 		}
 
-		$content .= '<div class="emoji-reactions">';
+		$markup = '<div class="emoji-reactions">';
 
 		foreach ( $reactions_summary as $emoji => $count ) {
-			$content .= sprintf(
+			$markup .= sprintf(
 				"<div data-emoji='%s' data-count='%d' data-post='%d' class='emoji-reaction'><div class='emoji'>%s</div><div class='count'>%d</div></div>",
 				esc_attr( $emoji ),
 				$count,
@@ -128,9 +128,24 @@ class React {
 
 		if ( comments_open( $post_id ) ) {
 			/* translators: This is the emoji used for the "Add new emoji reaction" button */
-			$content .= "<div data-post='$post_id' class='emoji-reaction-add'><div class='emoji'>" . __( '😃+', 'react' ) . '</div></div>';
+			$markup .= "<div data-post='$post_id' class='emoji-reaction-add'><div class='emoji'>" . __( '😃+', 'react' ) . '</div></div>';
 		}
-		$content .= '</div>';
+		$markup .= '</div>';
+
+		/**
+		 * Filters the reactions widget markup appended to the post content.
+		 *
+		 * Lets a theme restyle or replace the widget's markup without
+		 * having to override the whole the_content() method. Whatever this
+		 * returns is expected to still be valid, escaped HTML -- this
+		 * filter runs after all user-controlled values (the emoji, the
+		 * post ID) have already been escaped into $markup.
+		 *
+		 * @param string $markup  The reactions widget HTML.
+		 * @param int    $post_id The post ID.
+		 */
+		$content .= apply_filters( 'react_reaction_markup', $markup, $post_id );
+
 		return $content;
 	}
 
@@ -229,7 +244,22 @@ class React {
 			return;
 		}
 
-		wp_cache_delete( (int) $comment->comment_post_ID, 'react_reaction_counts' );
+		$post_id = (int) $comment->comment_post_ID;
+
+		wp_cache_delete( $post_id, 'react_reaction_counts' );
+
+		/**
+		 * Fires after a post's cached reaction count has been invalidated.
+		 *
+		 * Fires once per invalidation trigger: a reaction comment being
+		 * inserted, deleted, or changing status (e.g. trashed, spammed, or
+		 * un/approved) -- see invalidate_reaction_count_cache_on_delete()
+		 * and invalidate_reaction_count_cache_on_status_change(), which both
+		 * call this method.
+		 *
+		 * @param int $post_id The post whose cached count was invalidated.
+		 */
+		do_action( 'react_reaction_count_invalidated', $post_id );
 	}
 
 	/**
