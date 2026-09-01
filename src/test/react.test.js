@@ -3,17 +3,28 @@
  */
 
 /**
- * `static/react.js` is a legacy, non-modular IIFE: it reads
- * `window.wp.react.settings` and wires up `document`-level event listeners
- * as a side effect of being loaded, rather than exporting anything. So it's
- * tested the way a browser would exercise it -- by setting up the DOM/
- * settings it expects, requiring it once, and then dispatching real events.
+ * `src/react.js` reads `window.wp.react.settings` and wires up
+ * `document`-level event listeners as a side effect of being loaded,
+ * rather than exporting anything. So it's tested the way a browser would
+ * exercise it -- by setting up the DOM/settings it expects, requiring it
+ * once, and then dispatching real events.
+ *
+ * The real `emoji-picker-element` library is mocked out here rather than
+ * imported for real: these tests cover this plugin's own glue code (how
+ * it creates/positions the picker and reacts to its `emoji-click` event),
+ * not the third-party library itself, which needs fetch/IndexedDB the
+ * jsdom test environment doesn't provide. With the import mocked away,
+ * `document.createElement( 'emoji-picker' )` just yields a plain,
+ * unregistered element -- enough to dispatch a synthetic `emoji-click`
+ * event against.
  */
+jest.mock( 'emoji-picker-element', () => ( {} ) );
 
 const SETTINGS = {
 	endpoint: 'https://example.test/wp-json/wp/v2/react',
 	nonce: 'test-nonce',
-	emoji_url: 'https://example.test/wp-content/plugins/react/static/emoji.json',
+	emoji_data_url:
+		'https://example.test/wp-content/plugins/react/static/emoji-data.json',
 };
 
 /**
@@ -78,38 +89,16 @@ beforeAll( () => {
 			</div>
 			<div data-post="42" class="emoji-reaction-add"><div class="emoji">&#128515;+</div></div>
 		</div>
-		<script type="text/html" id="tmpl-emoji-reaction-selector">
-			<div id="emoji-reaction-selector">
-				<div class="tabs">
-					<div data-tab="0" class="emoji-reaction-tab"></div>
-					<div data-tab="1" class="emoji-reaction-tab"></div>
-				</div>
-				<div class="container container-0"></div>
-				<div class="container container-1"></div>
-			</div>
-		</script>
 	`;
 
 	require( '../react.js' );
-
-	// react.js only calls loadEmoji() once (it guards on an internal
-	// "loading" flag), whether that happens immediately at require time or
-	// on a later 'load'/'DOMContentLoaded' event -- so dispatching 'load'
-	// here reliably triggers it exactly once, regardless of jsdom's
-	// document.readyState at require time.
-	window.dispatchEvent( new window.Event( 'load' ) );
-
-	const emojiRequest = MockXHR.instances.find(
-		( instance ) => instance.url === SETTINGS.emoji_url
-	);
-	emojiRequest.respond( 200, JSON.stringify( { 0: [ [ '0x1f600' ] ], 1: [ [ '0x1f601' ] ] } ) );
 } );
 
 beforeEach( () => {
 	MockXHR.instances = [];
 } );
 
-test( 'clicking a reaction bubble POSTs the reaction to the REST endpoint, including this browser\'s anonymous client id', () => {
+test( "clicking a reaction bubble POSTs the reaction to the REST endpoint, including this browser's anonymous client id", () => {
 	const bubble = document.querySelector( '.emoji-reaction' );
 
 	click( bubble );
@@ -182,31 +171,37 @@ test( 'reacting still POSTs, without a client id, when localStorage is unavailab
 	}
 } );
 
-test( 'the add-reaction button opens the popup on the first tab, switching tabs shows only that tab, and a second click closes the popup', () => {
+test( 'the add-reaction button creates and shows an <emoji-picker>, pointed at the self-hosted emoji data', () => {
 	const addButton = document.querySelector( '.emoji-reaction-add' );
 
 	click( addButton );
 
-	const popup = document.getElementById( 'emoji-reaction-selector' );
-	expect( popup ).not.toBeNull();
-	expect( popup.style.display ).toBe( 'block' );
-	expect(
-		popup.querySelector( '.container-0' ).style.display
-	).toBe( 'block' );
-	expect(
-		popup.querySelector( '.container-1' ).style.display
-	).toBe( 'none' );
+	const picker = document.querySelector( 'emoji-picker' );
+	expect( picker ).not.toBeNull();
+	expect( picker.style.display ).toBe( 'block' );
+	expect( picker.dataSource ).toBe( SETTINGS.emoji_data_url );
+	expect( picker.dataset.post ).toBe( '42' );
 
-	click( popup.querySelector( '.emoji-reaction-tab[data-tab="1"]' ) );
+	// Clicking the add button again, while the picker is open, closes it.
+	click( addButton );
+	expect( picker.style.display ).toBe( 'none' );
+} );
 
-	expect(
-		popup.querySelector( '.container-0' ).style.display
-	).toBe( 'none' );
-	expect(
-		popup.querySelector( '.container-1' ).style.display
-	).toBe( 'block' );
+test( 'picking an emoji from the picker POSTs the reaction and hides the picker', () => {
+	const addButton = document.querySelector( '.emoji-reaction-add' );
 
 	click( addButton );
 
-	expect( popup.style.display ).toBe( 'none' );
+	const picker = document.querySelector( 'emoji-picker' );
+	picker.dispatchEvent(
+		new window.CustomEvent( 'emoji-click', {
+			detail: { unicode: '🎉' },
+		} )
+	);
+
+	expect( MockXHR.instances ).toHaveLength( 1 );
+	expect( MockXHR.instances[ 0 ].body ).toContain(
+		'post=42&emoji=' + encodeURIComponent( '🎉' )
+	);
+	expect( picker.style.display ).toBe( 'none' );
 } );
