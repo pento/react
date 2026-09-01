@@ -108,6 +108,41 @@
 	};
 
 	/**
+	 * Materialize the selector template into the DOM.
+	 *
+	 * The selector markup is printed inside a `text/html` script template
+	 * rather than as live markup, so that it isn't reachable in the DOM
+	 * (e.g. by a screen reader) until it's actually needed.
+	 *
+	 * @return {HTMLElement|null} The selector popup element, or null if the template is missing.
+	 */
+	const getPopup = function () {
+		const existing = document.getElementById( 'emoji-reaction-selector' );
+		if ( existing ) {
+			return existing;
+		}
+
+		const template = document.getElementById(
+			'tmpl-emoji-reaction-selector'
+		);
+		if ( ! template ) {
+			return null;
+		}
+
+		const wrapper = document.createElement( 'div' );
+		wrapper.innerHTML = template.innerHTML;
+
+		const element = wrapper.firstElementChild;
+		if ( ! element ) {
+			return null;
+		}
+
+		document.body.appendChild( element );
+
+		return element;
+	};
+
+	/**
 	 * Add the emoji list to the reaction popup.
 	 */
 	const populateReactionPopup = function () {
@@ -124,11 +159,15 @@
 			return;
 		}
 
-		popupPopulated = true;
+		if ( ! popup ) {
+			popup = getPopup();
+		}
 
 		if ( ! popup ) {
-			popup = document.getElementById( 'emoji-reaction-selector' );
+			return;
 		}
+
+		popupPopulated = true;
 
 		for ( ii = 0; ii <= 7; ii++ ) {
 			if ( ! emoji[ ii ] ) {
