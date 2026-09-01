@@ -26,6 +26,21 @@ class React_Test_Frontend extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Expect the deprecation notice wp_footer() triggers via WP core's own
+	 * the_block_template_skip_link(), unrelated to this plugin. It's only
+	 * been deprecated since WP 6.4, so asserting it unconditionally would
+	 * fail this plugin's test suite on the older WP versions it still
+	 * supports.
+	 */
+	private function expect_footer_deprecation() {
+		global $wp_version;
+
+		if ( version_compare( $wp_version, '6.4', '>=' ) ) {
+			$this->setExpectedDeprecated( 'the_block_template_skip_link' );
+		}
+	}
+
+	/**
 	 * Test that the container is added to a post.
 	 */
 	public function test_container_exists() {
@@ -70,9 +85,7 @@ class React_Test_Frontend extends WP_UnitTestCase {
 	 * Test that the emoji.json URL is passed.
 	 */
 	public function test_json_url_is_passed() {
-		// wp_footer() calls WP core's own the_block_template_skip_link(),
-		// unrelated to this plugin; it's been deprecated since WP 6.4.
-		$this->setExpectedDeprecated( 'the_block_template_skip_link' );
+		$this->expect_footer_deprecation();
 
 		$post_id = $this->factory->post->create();
 
@@ -91,9 +104,7 @@ class React_Test_Frontend extends WP_UnitTestCase {
 	 * cookie-auth check.
 	 */
 	public function test_rest_nonce_is_passed() {
-		// wp_footer() calls WP core's own the_block_template_skip_link(),
-		// unrelated to this plugin; it's been deprecated since WP 6.4.
-		$this->setExpectedDeprecated( 'the_block_template_skip_link' );
+		$this->expect_footer_deprecation();
 
 		$post_id = $this->factory->post->create();
 
@@ -136,9 +147,7 @@ class React_Test_Frontend extends WP_UnitTestCase {
 	 * Test that the reaction selector template is added to the footer.
 	 */
 	public function test_selector_in_footer() {
-		// wp_footer() calls WP core's own the_block_template_skip_link(),
-		// unrelated to this plugin; it's been deprecated since WP 6.4.
-		$this->setExpectedDeprecated( 'the_block_template_skip_link' );
+		$this->expect_footer_deprecation();
 
 		$post_id = $this->factory->post->create();
 
