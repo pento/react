@@ -97,7 +97,24 @@ const getOrCreatePicker = function () {
 	picker.style.display = 'none';
 
 	picker.addEventListener( 'emoji-click', function ( event ) {
-		react( picker.dataset.post, event.detail.unicode );
+		// event.detail.unicode is only present when the library could
+		// resolve a skin-tone-adjusted variant for the clicked emoji (see
+		// getDetailForClickEvent()/unicodeWithSkin() in its source) --
+		// notably, entries served from its "favorites"/recently-used bar
+		// can omit it, silently leaving react() to send the literal
+		// string "undefined" as the emoji, which the REST endpoint
+		// rejects with no visible feedback (it just looks like the click
+		// did nothing). event.detail.emoji.unicode is the same field on
+		// the full emoji record the library always resolves the clicked
+		// item to, and is reliably present.
+		const unicode =
+			event.detail.unicode ||
+			( event.detail.emoji && event.detail.emoji.unicode );
+
+		if ( unicode ) {
+			react( picker.dataset.post, unicode );
+		}
+
 		hideReactionPicker();
 	} );
 
@@ -303,6 +320,15 @@ const react = function ( post, emoji ) {
 		}
 
 		if ( 200 !== xhr.status ) {
+			// Surface this rather than failing silently -- from the
+			// user's perspective, an uncaught non-200 here looks
+			// identical to the reaction click simply not having worked.
+			if ( window.console && window.console.warn ) {
+				window.console.warn(
+					'Reacting failed with status ' + xhr.status + ':',
+					xhr.responseText
+				);
+			}
 			return;
 		}
 

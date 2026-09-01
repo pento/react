@@ -246,3 +246,43 @@ test( 'picking an emoji from the picker POSTs the reaction and hides the picker'
 	);
 	expect( picker.style.display ).toBe( 'none' );
 } );
+
+test( 'falls back to detail.emoji.unicode when the top-level detail.unicode is missing (e.g. from the favorites bar)', () => {
+	// emoji-picker-element's own source (getDetailForClickEvent() in
+	// picker.js) only includes a top-level `unicode` in the emoji-click
+	// detail when it could resolve a skin-tone-adjusted variant; it can
+	// be entirely absent, with the resolved emoji available only via
+	// detail.emoji.unicode instead.
+	const addButton = document.querySelector( '.emoji-reaction-add' );
+
+	click( addButton );
+
+	const picker = document.querySelector( 'emoji-picker' );
+	picker.dispatchEvent(
+		new window.CustomEvent( 'emoji-click', {
+			detail: { emoji: { unicode: '🍉' } },
+		} )
+	);
+
+	expect( MockXHR.instances ).toHaveLength( 1 );
+	expect( MockXHR.instances[ 0 ].body ).toContain(
+		'post=42&emoji=' + encodeURIComponent( '🍉' )
+	);
+	expect( picker.style.display ).toBe( 'none' );
+} );
+
+test( "doesn't POST when neither detail.unicode nor detail.emoji.unicode is present", () => {
+	const addButton = document.querySelector( '.emoji-reaction-add' );
+
+	click( addButton );
+
+	const picker = document.querySelector( 'emoji-picker' );
+	picker.dispatchEvent(
+		new window.CustomEvent( 'emoji-click', {
+			detail: {},
+		} )
+	);
+
+	expect( MockXHR.instances ).toHaveLength( 0 );
+	expect( picker.style.display ).toBe( 'none' );
+} );
