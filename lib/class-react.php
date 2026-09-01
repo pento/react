@@ -32,7 +32,6 @@ class React {
 
 		$this->enqueue();
 
-		add_action( 'wp_head', array( $this, 'print_settings' ) );
 		add_action( 'wp_footer', array( $this, 'print_selector' ) );
 
 		add_filter( 'the_content', array( $this, 'the_content' ) );
@@ -57,29 +56,24 @@ class React {
 	}
 
 	/**
-	 * Print the JavaScript settings.
-	 */
-	public function print_settings() {
-		?>
-			<script type="text/javascript">
-				window.wp = window.wp || {};
-				window.wp.react = window.wp.react || {};
-				window.wp.react.settings = {
-					emoji_url: <?php echo wp_json_encode( esc_url_raw( REACT_URL . '/static/emoji.json' ) ); ?>,
-					endpoint:  <?php echo wp_json_encode( esc_url_raw( get_rest_url( null, $this->api->namespace . '/' . $this->api->rest_base ) ) ); ?>,
-					nonce:     <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?>
-				}
-			</script>
-		<?php
-	}
-
-	/**
 	 * Enqueue relevant JS and CSS
 	 */
 	public function enqueue() {
 		wp_enqueue_style( 'react-emoji', REACT_URL . '/static/react.css', array(), REACT_VERSION );
 
 		wp_enqueue_script( 'react-emoji', REACT_URL . '/static/react.js', array(), REACT_VERSION, true );
+
+		$settings = array(
+			'emoji_url' => esc_url_raw( REACT_URL . '/static/emoji.json' ),
+			'endpoint'  => esc_url_raw( get_rest_url( null, $this->api->namespace . '/' . $this->api->rest_base ) ),
+			'nonce'     => wp_create_nonce( 'wp_rest' ),
+		);
+
+		wp_add_inline_script(
+			'react-emoji',
+			'window.wp = window.wp || {}; window.wp.react = window.wp.react || {}; window.wp.react.settings = ' . wp_json_encode( $settings ) . ';',
+			'before'
+		);
 	}
 
 	/**
@@ -236,7 +230,7 @@ class React {
 	public function print_selector() {
 		?>
 			<script type="text/html" id="tmpl-emoji-reaction-selector">
-				<div id="emoji-reaction-selector" style="display: none;">
+				<div id="emoji-reaction-selector">
 					<div class="tabs">
 						<div data-tab="0" aria-label="<?php echo esc_attr__( 'People', 'react' ); ?>" title="<?php echo esc_attr__( 'People', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '😀', 'react' ); ?></div>
 						<div data-tab="1" aria-label="<?php echo esc_attr__( 'Nature', 'react' ); ?>" title="<?php echo esc_attr__( 'Nature', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '🌿', 'react' ); ?></div>

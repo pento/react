@@ -59,10 +59,10 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		$this->go_to( get_permalink( $post_id ) );
 
 		ob_start();
-		wp_head();
-		$head = ob_get_clean();
+		wp_footer();
+		$footer = ob_get_clean();
 
-		$this->assertEquals( 1, preg_match( '/emoji_url: "[^"]*emoji\.json"/', $head ) );
+		$this->assertEquals( 1, preg_match( '/"emoji_url":"[^"]*emoji\.json"/', $footer ) );
 	}
 
 	/**
@@ -76,10 +76,10 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		$this->go_to( get_permalink( $post_id ) );
 
 		ob_start();
-		wp_head();
-		$head = ob_get_clean();
+		wp_footer();
+		$footer = ob_get_clean();
 
-		$this->assertEquals( 1, preg_match( '/nonce:\s*"[^"]+"/', $head ) );
+		$this->assertEquals( 1, preg_match( '/"nonce":"[^"]+"/', $footer ) );
 	}
 
 	/**
@@ -115,8 +115,6 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		$post_id = $this->factory->post->create();
 
 		$this->go_to( get_permalink( $post_id ) );
-
-		$this->setExpectedDeprecated( 'the_block_template_skip_link' );
 
 		ob_start();
 		wp_footer();
