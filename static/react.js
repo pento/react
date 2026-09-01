@@ -100,6 +100,11 @@
 	 * @return {HTMLElement|null} The selector popup element, or null if the template is missing.
 	 */
 	const getPopup = function () {
+		const existing = document.getElementById( 'emoji-reaction-selector' );
+		if ( existing ) {
+			return existing;
+		}
+
 		const template = document.getElementById(
 			'tmpl-emoji-reaction-selector'
 		);
@@ -111,6 +116,10 @@
 		wrapper.innerHTML = template.innerHTML;
 
 		const element = wrapper.firstElementChild;
+		if ( ! element ) {
+			return null;
+		}
+
 		document.body.appendChild( element );
 
 		return element;
@@ -133,8 +142,6 @@
 			return;
 		}
 
-		popupPopulated = true;
-
 		if ( ! popup ) {
 			popup = getPopup();
 		}
@@ -142,6 +149,8 @@
 		if ( ! popup ) {
 			return;
 		}
+
+		popupPopulated = true;
 
 		for ( ii = 0; ii <= 7; ii++ ) {
 			if ( ! emoji[ ii ] ) {

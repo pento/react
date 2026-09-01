@@ -79,7 +79,7 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		wp_footer();
 		$footer = ob_get_clean();
 
-		$this->assertStringContainsString( 'id="tmpl-emoji-reaction-selector"', $footer );
+		$this->assertStringContainsString( '<script type="text/html" id="tmpl-emoji-reaction-selector">', $footer );
 		$this->assertStringContainsString( 'id="emoji-reaction-selector"', $footer );
 	}
 }
