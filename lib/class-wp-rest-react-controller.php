@@ -362,15 +362,22 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 			return $allowed;
 		}
 
-		$allowed  = array();
-		$contents = file_get_contents( dirname( __DIR__ ) . '/static/emoji.json' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local file, not a remote request.
+		$allowed = array();
+		$path    = dirname( __DIR__ ) . '/static/emoji.json';
+
+		if ( ! is_readable( $path ) ) {
+			return $allowed;
+		}
+
+		$contents = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local file, not a remote request.
 		$data     = json_decode( (string) $contents, true );
 
 		foreach ( (array) $data as $category ) {
 			foreach ( (array) $category as $codepoints ) {
 				$char = '';
 				foreach ( (array) $codepoints as $hex ) {
-					$char .= mb_chr( intval( $hex, 16 ), 'UTF-8' );
+					// Build the UTF-8 character from its codepoint without requiring ext-mbstring.
+					$char .= html_entity_decode( '&#' . intval( $hex, 16 ) . ';', ENT_QUOTES, 'UTF-8' );
 				}
 
 				if ( '' !== $char ) {
