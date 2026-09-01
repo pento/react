@@ -24,6 +24,7 @@ class React {
 		$this->api = new WP_REST_React_Controller();
 
 		add_action( 'rest_api_init', array( $this->api, 'register_routes' ) );
+		add_action( 'wp_insert_comment', array( $this, 'invalidate_reaction_count_cache' ), 10, 2 );
 
 		if ( is_admin() ) {
 			return;
@@ -166,7 +167,30 @@ class React {
 			return $count;
 		}
 
-		$reaction_count = get_comments(
+		return max( 0, (int) $count - $this->get_reaction_count( $post_id ) );
+	}
+
+	/**
+	 * Get the number of reactions a post has, from cache where possible.
+	 *
+	 * This runs on every call to get_comments_number(), which can mean once
+	 * per post on an archive page -- caching this avoids a COUNT query per
+	 * post per page load.
+	 * The cache is invalidated in invalidate_reaction_count_cache() whenever
+	 * a new reaction comment is inserted.
+	 *
+	 * @param int $post_id The post ID.
+	 * @return int Number of reactions the post has.
+	 */
+	public function get_reaction_count( $post_id ) {
+		$post_id = (int) $post_id;
+		$cached  = wp_cache_get( $post_id, 'react_reaction_counts' );
+
+		if ( false !== $cached ) {
+			return (int) $cached;
+		}
+
+		$count = (int) get_comments(
 			array(
 				'post_id' => $post_id,
 				'type'    => 'reaction',
@@ -174,7 +198,23 @@ class React {
 			)
 		);
 
-		return max( 0, (int) $count - (int) $reaction_count );
+		wp_cache_set( $post_id, $count, 'react_reaction_counts' );
+
+		return $count;
+	}
+
+	/**
+	 * Invalidate the cached reaction count for a post when a reaction is added.
+	 *
+	 * @param int        $id      The comment ID.
+	 * @param WP_Comment $comment The comment object.
+	 */
+	public function invalidate_reaction_count_cache( $id, $comment ) {
+		if ( 'reaction' !== $comment->comment_type ) {
+			return;
+		}
+
+		wp_cache_delete( (int) $comment->comment_post_ID, 'react_reaction_counts' );
 	}
 
 	/**

@@ -139,8 +139,15 @@ class React_Test_Frontend extends WP_UnitTestCase {
 
 	/**
 	 * Test that reactions don't inflate the post's displayed comment count.
+	 *
+	 * Goes through apply_filters() rather than calling
+	 * exclude_reactions_from_comments_number() directly, so this also
+	 * exercises the actual get_comments_number filter registration
+	 * (priority/accepted_args), not just the method's own logic.
 	 */
 	public function test_reactions_excluded_from_comments_number() {
+		React::init();
+
 		$post_id = $this->factory->post->create();
 
 		$this->factory->comment->create(
@@ -158,9 +165,7 @@ class React_Test_Frontend extends WP_UnitTestCase {
 			)
 		);
 
-		$react = React::init();
-
-		$this->assertEquals( 1, $react->exclude_reactions_from_comments_number( 2, $post_id ) );
+		$this->assertEquals( 1, apply_filters( 'get_comments_number', 2, $post_id ) );
 	}
 
 	/**
@@ -168,8 +173,30 @@ class React_Test_Frontend extends WP_UnitTestCase {
 	 * site-wide reaction count.
 	 */
 	public function test_comments_number_unchanged_for_empty_post_id() {
+		React::init();
+
+		$this->assertEquals( 2, apply_filters( 'get_comments_number', 2, 0 ) );
+	}
+
+	/**
+	 * Test that the reaction count cache is invalidated when a new reaction
+	 * is added, rather than serving a stale count.
+	 */
+	public function test_reaction_count_cache_invalidated_on_insert() {
 		$react = React::init();
 
-		$this->assertEquals( 2, $react->exclude_reactions_from_comments_number( 2, 0 ) );
+		$post_id = $this->factory->post->create();
+
+		$this->assertEquals( 0, $react->get_reaction_count( $post_id ) );
+
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_approved' => 1,
+			)
+		);
+
+		$this->assertEquals( 1, $react->get_reaction_count( $post_id ) );
 	}
 }
