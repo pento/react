@@ -50,8 +50,14 @@
 	 * @param {Event} event The click event
 	 */
 	const reactionClick = function ( event ) {
+		// The block editor's live preview renders post content inside an
+		// iframe named "editor-canvas"; reactions shouldn't be clickable
+		// there. Checking window.self !== window.top instead would also
+		// catch any other legitimate embedding of the front end in an
+		// iframe (e.g. WordPress Playground), which would silently break
+		// reactions everywhere but the top-level page.
 		const isEditor =
-			window.self !== window.top ||
+			'editor-canvas' === window.name ||
 			( window.wp && window.wp.blockEditor );
 		if ( isEditor ) {
 			return;
