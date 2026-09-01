@@ -29,7 +29,14 @@
 
 emoji-picker {
 	position: absolute;
-	width: 300px;
+
+	/*
+	 * 400px, not 300px: the default 8-column grid needs more room than
+	 * 300px leaves once the vertical scrollbar's own width is subtracted,
+	 * which was causing a horizontal scrollbar to appear too. Matches the
+	 * width emoji-picker-element's own docs recommend for 8 columns.
+	 */
+	width: 400px;
 	height: 300px;
 	display: none;
 	z-index: 100;
