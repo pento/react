@@ -82,4 +82,122 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		$this->assertStringContainsString( '<script type="text/html" id="tmpl-emoji-reaction-selector">', $footer );
 		$this->assertStringContainsString( 'id="emoji-reaction-selector"', $footer );
 	}
+
+	/**
+	 * Test that a default comment query excludes reactions.
+	 */
+	public function test_reactions_excluded_from_default_comment_query() {
+		React::init();
+
+		$post_id = $this->factory->post->create();
+
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_approved' => 1,
+			)
+		);
+
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_approved' => 1,
+			)
+		);
+
+		$comments = get_comments( array( 'post_id' => $post_id ) );
+
+		$this->assertCount( 1, $comments );
+		$this->assertNotEquals( 'reaction', $comments[0]->comment_type );
+	}
+
+	/**
+	 * Test that a query explicitly asking for reactions still finds them.
+	 */
+	public function test_reactions_still_queryable_explicitly() {
+		React::init();
+
+		$post_id = $this->factory->post->create();
+
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_approved' => 1,
+			)
+		);
+
+		$comments = get_comments(
+			array(
+				'post_id' => $post_id,
+				'type'    => 'reaction',
+			)
+		);
+
+		$this->assertCount( 1, $comments );
+	}
+
+	/**
+	 * Test that reactions don't inflate the post's displayed comment count.
+	 *
+	 * Goes through apply_filters() rather than calling
+	 * exclude_reactions_from_comments_number() directly, so this also
+	 * exercises the actual get_comments_number filter registration
+	 * (priority/accepted_args), not just the method's own logic.
+	 */
+	public function test_reactions_excluded_from_comments_number() {
+		React::init();
+
+		$post_id = $this->factory->post->create();
+
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_approved' => 1,
+			)
+		);
+
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_approved' => 1,
+			)
+		);
+
+		$this->assertEquals( 1, apply_filters( 'get_comments_number', 2, $post_id ) );
+	}
+
+	/**
+	 * Test that an empty post ID is left untouched, rather than triggering a
+	 * site-wide reaction count.
+	 */
+	public function test_comments_number_unchanged_for_empty_post_id() {
+		React::init();
+
+		$this->assertEquals( 2, apply_filters( 'get_comments_number', 2, 0 ) );
+	}
+
+	/**
+	 * Test that the reaction count cache is invalidated when a new reaction
+	 * is added, rather than serving a stale count.
+	 */
+	public function test_reaction_count_cache_invalidated_on_insert() {
+		$react = React::init();
+
+		$post_id = $this->factory->post->create();
+
+		$this->assertEquals( 0, $react->get_reaction_count( $post_id ) );
+
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_approved' => 1,
+			)
+		);
+
+		$this->assertEquals( 1, $react->get_reaction_count( $post_id ) );
+	}
 }

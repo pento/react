@@ -24,6 +24,7 @@ class React {
 		$this->api = new WP_REST_React_Controller();
 
 		add_action( 'rest_api_init', array( $this->api, 'register_routes' ) );
+		add_action( 'wp_insert_comment', array( $this, 'invalidate_reaction_count_cache' ), 10, 2 );
 
 		if ( is_admin() ) {
 			return;
@@ -35,6 +36,9 @@ class React {
 		add_action( 'wp_footer', array( $this, 'print_selector' ) );
 
 		add_filter( 'the_content', array( $this, 'the_content' ) );
+
+		add_filter( 'comments_clauses', array( $this, 'exclude_reactions_from_comments_clauses' ), 10, 2 );
+		add_filter( 'get_comments_number', array( $this, 'exclude_reactions_from_comments_number' ), 10, 2 );
 	}
 
 	/**
@@ -117,6 +121,100 @@ class React {
 		}
 		$content .= '</div>';
 		return $content;
+	}
+
+	/**
+	 * Exclude reactions from any comment query that isn't explicitly asking for them.
+	 *
+	 * Reactions are already displayed via the_content(); showing them again
+	 * in the regular comment list, a comment feed, or something like the
+	 * Recent Comments widget is redundant. Filtering at the SQL clause level
+	 * (rather than e.g. comments_template_query_args, which only covers the
+	 * theme's main comment-list query) means every one of those surfaces is
+	 * covered, without needing to special-case each of them individually.
+	 * A query that explicitly asks for the reaction type -- including this
+	 * plugin's own queries -- is left untouched.
+	 *
+	 * @param array            $clauses SQL clauses for the comment query.
+	 * @param WP_Comment_Query $query   The query object.
+	 * @return array Filtered clauses.
+	 */
+	public function exclude_reactions_from_comments_clauses( $clauses, $query ) {
+		$requested_types = array_merge(
+			isset( $query->query_vars['type'] ) ? (array) $query->query_vars['type'] : array(),
+			isset( $query->query_vars['type__in'] ) ? (array) $query->query_vars['type__in'] : array()
+		);
+
+		if ( in_array( 'reaction', $requested_types, true ) ) {
+			return $clauses;
+		}
+
+		global $wpdb;
+		$clauses['where'] .= $wpdb->prepare( " AND {$wpdb->comments}.comment_type != %s", 'reaction' );
+
+		return $clauses;
+	}
+
+	/**
+	 * Exclude reactions from the post's displayed comment count.
+	 *
+	 * @param int $count   The number of comments the post has.
+	 * @param int $post_id The post ID.
+	 * @return int Filtered comment count.
+	 */
+	public function exclude_reactions_from_comments_number( $count, $post_id ) {
+		if ( empty( $post_id ) ) {
+			return $count;
+		}
+
+		return max( 0, (int) $count - $this->get_reaction_count( $post_id ) );
+	}
+
+	/**
+	 * Get the number of reactions a post has, from cache where possible.
+	 *
+	 * This runs on every call to get_comments_number(), which can mean once
+	 * per post on an archive page -- caching this avoids a COUNT query per
+	 * post per page load.
+	 * The cache is invalidated in invalidate_reaction_count_cache() whenever
+	 * a new reaction comment is inserted.
+	 *
+	 * @param int $post_id The post ID.
+	 * @return int Number of reactions the post has.
+	 */
+	public function get_reaction_count( $post_id ) {
+		$post_id = (int) $post_id;
+		$cached  = wp_cache_get( $post_id, 'react_reaction_counts' );
+
+		if ( false !== $cached ) {
+			return (int) $cached;
+		}
+
+		$count = (int) get_comments(
+			array(
+				'post_id' => $post_id,
+				'type'    => 'reaction',
+				'count'   => true,
+			)
+		);
+
+		wp_cache_set( $post_id, $count, 'react_reaction_counts' );
+
+		return $count;
+	}
+
+	/**
+	 * Invalidate the cached reaction count for a post when a reaction is added.
+	 *
+	 * @param int        $id      The comment ID.
+	 * @param WP_Comment $comment The comment object.
+	 */
+	public function invalidate_reaction_count_cache( $id, $comment ) {
+		if ( 'reaction' !== $comment->comment_type ) {
+			return;
+		}
+
+		wp_cache_delete( (int) $comment->comment_post_ID, 'react_reaction_counts' );
 	}
 
 	/**
