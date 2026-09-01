@@ -10,6 +10,37 @@
  */
 class React_Test_Frontend extends WP_UnitTestCase {
 	/**
+	 * React::enqueue() only runs once, from React::init()'s singleton
+	 * constructor, so it registers react-emoji's inline settings script
+	 * (with the REST nonce) against whichever $wp_scripts instance exists
+	 * at that moment. $wp_scripts itself isn't reset between tests, and a
+	 * script's inline "before" data only prints once per instance -- so
+	 * without this, only the first test in this class to call wp_footer()
+	 * would ever see the settings script in its output.
+	 */
+	public function set_up() {
+		parent::set_up();
+
+		$GLOBALS['wp_scripts'] = null;
+		React::init()->enqueue();
+	}
+
+	/**
+	 * Expect the deprecation notice wp_footer() triggers via WP core's own
+	 * the_block_template_skip_link(), unrelated to this plugin. It's only
+	 * been deprecated since WP 6.4, so asserting it unconditionally would
+	 * fail this plugin's test suite on the older WP versions it still
+	 * supports.
+	 */
+	private function expect_footer_deprecation() {
+		global $wp_version;
+
+		if ( version_compare( $wp_version, '6.4', '>=' ) ) {
+			$this->setExpectedDeprecated( 'the_block_template_skip_link' );
+		}
+	}
+
+	/**
 	 * Test that the container is added to a post.
 	 */
 	public function test_container_exists() {
@@ -54,6 +85,8 @@ class React_Test_Frontend extends WP_UnitTestCase {
 	 * Test that the emoji.json URL is passed.
 	 */
 	public function test_json_url_is_passed() {
+		$this->expect_footer_deprecation();
+
 		$post_id = $this->factory->post->create();
 
 		$this->go_to( get_permalink( $post_id ) );
@@ -71,6 +104,8 @@ class React_Test_Frontend extends WP_UnitTestCase {
 	 * cookie-auth check.
 	 */
 	public function test_rest_nonce_is_passed() {
+		$this->expect_footer_deprecation();
+
 		$post_id = $this->factory->post->create();
 
 		$this->go_to( get_permalink( $post_id ) );
@@ -112,6 +147,8 @@ class React_Test_Frontend extends WP_UnitTestCase {
 	 * Test that the reaction selector template is added to the footer.
 	 */
 	public function test_selector_in_footer() {
+		$this->expect_footer_deprecation();
+
 		$post_id = $this->factory->post->create();
 
 		$this->go_to( get_permalink( $post_id ) );
