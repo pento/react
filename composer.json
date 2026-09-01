@@ -16,7 +16,8 @@
 	},
 	"scripts": {
 		"lint:php": "phpcs",
-		"format:php": "phpcbf"
+		"format:php": "phpcbf",
+		"compile-emoji": "php tools/compile_emoji.php"
 	},
 	"config": {
 		"allow-plugins": {
