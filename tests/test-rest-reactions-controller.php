@@ -56,6 +56,28 @@ class WP_Test_REST_Reactions_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertEquals( 1, $data[0]['count'] );
 	}
 
+	public function test_create_item_rejects_non_whitelisted_emoji() {
+		$post_id = $this->factory->post->create();
+
+		$user_id = $this->factory->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user_id );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/react' );
+		$request->set_param( 'post', $post_id );
+		$request->set_param( 'emoji', '<script>alert(1)</script>' );
+		$response = $this->server->dispatch( $request );
+
+		$this->assertEquals( 400, $response->get_status() );
+
+		$comments = get_comments(
+			array(
+				'post_id' => $post_id,
+				'type'    => 'reaction',
+			)
+		);
+		$this->assertCount( 0, $comments );
+	}
+
 	public function test_update_item() {
 		$this->markTestSkipped( 'Update reaction is not supported.' );
 	}

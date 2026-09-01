@@ -66,6 +66,49 @@ class React_Test_Frontend extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test that a REST nonce is passed to the front end, so logged-in
+	 * requests to the reaction endpoint don't get rejected as a failed
+	 * cookie-auth check.
+	 */
+	public function test_rest_nonce_is_passed() {
+		$post_id = $this->factory->post->create();
+
+		$this->go_to( get_permalink( $post_id ) );
+
+		ob_start();
+		wp_head();
+		$head = ob_get_clean();
+
+		$this->assertEquals( 1, preg_match( '/nonce:\s*"[^"]+"/', $head ) );
+	}
+
+	/**
+	 * Test that reaction content is escaped when rendered, so a malicious
+	 * comment_content value (however it got into the database) can't inject
+	 * markup into the page.
+	 */
+	public function test_reaction_content_is_escaped() {
+		$post_id = $this->factory->post->create();
+
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_content'  => '\'"><script>alert(1)</script>',
+				'comment_approved' => 1,
+			)
+		);
+
+		$this->go_to( get_permalink( $post_id ) );
+
+		ob_start();
+		the_content();
+		$content = ob_get_clean();
+
+		$this->assertStringNotContainsString( '<script>alert(1)</script>', $content );
+	}
+
+	/**
 	 * Test that the reaction selector template is added to the footer.
 	 */
 	public function test_selector_in_footer() {

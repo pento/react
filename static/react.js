@@ -297,6 +297,10 @@
 			'application/x-www-form-urlencoded'
 		);
 
+		if ( settings.nonce ) {
+			xhr.setRequestHeader( 'X-WP-Nonce', settings.nonce );
+		}
+
 		xhr.send( params );
 	};
 

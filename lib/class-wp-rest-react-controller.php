@@ -312,9 +312,73 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 			'description'       => __( 'The reaction emoji.', 'react' ),
 			'type'              => 'string',
 			'minLength'         => 1,
-			'validate_callback' => 'rest_validate_request_arg',
+			'validate_callback' => array( $this, 'validate_emoji' ),
 		);
 
 		return $query_params;
+	}
+
+	/**
+	 * Validate that a submitted emoji is one of the reactions the picker
+	 * actually offers, rather than accepting arbitrary attacker-controlled
+	 * strings straight into a public comment.
+	 *
+	 * @param mixed           $value   Value of the 'emoji' parameter.
+	 * @param WP_REST_Request $request The request object.
+	 * @param string          $param   The 'emoji' parameter name.
+	 * @return true|WP_Error
+	 */
+	public function validate_emoji( $value, $request, $param ) {
+		$valid = rest_validate_request_arg( $value, $request, $param );
+		if ( is_wp_error( $valid ) ) {
+			return $valid;
+		}
+
+		if ( ! isset( self::get_allowed_emoji()[ $value ] ) ) {
+			return new WP_Error(
+				'rest_invalid_emoji',
+				__( 'Sorry, that is not a recognized reaction emoji.', 'react' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Build the set of emoji the reaction picker offers, keyed by the emoji
+	 * character itself for constant-time lookups.
+	 *
+	 * Reads from the same compiled dataset (static/emoji.json) that the
+	 * front-end picker renders from, so only emoji actually surfaced in the
+	 * UI can ever be accepted from the API.
+	 *
+	 * @return array<string, true> Map of emoji character => true.
+	 */
+	private static function get_allowed_emoji() {
+		static $allowed = null;
+
+		if ( null !== $allowed ) {
+			return $allowed;
+		}
+
+		$allowed  = array();
+		$contents = file_get_contents( dirname( __DIR__ ) . '/static/emoji.json' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local file, not a remote request.
+		$data     = json_decode( (string) $contents, true );
+
+		foreach ( (array) $data as $category ) {
+			foreach ( (array) $category as $codepoints ) {
+				$char = '';
+				foreach ( (array) $codepoints as $hex ) {
+					$char .= mb_chr( intval( $hex, 16 ), 'UTF-8' );
+				}
+
+				if ( '' !== $char ) {
+					$allowed[ $char ] = true;
+				}
+			}
+		}
+
+		return $allowed;
 	}
 }
