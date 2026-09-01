@@ -12,13 +12,9 @@ define( 'REACT_URL', plugins_url( '', __FILE__ ) );
 define( 'REACT_VERSION', '0.1' );
 
 /**
- * Loads the plugin, once WP_REST_Posts_Controller is available.
+ * Loads the plugin.
  */
 function react_load() {
-	if ( ! class_exists( 'WP_REST_Posts_Controller' ) ) {
-		return;
-	}
-
 	load_plugin_textdomain( 'react' );
 
 	require_once __DIR__ . '/lib/class-wp-rest-react-controller.php';
