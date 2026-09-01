@@ -424,7 +424,12 @@
 				window.localStorage.setItem( CLIENT_ID_STORAGE_KEY, id );
 			}
 			return id;
-		} catch {
+			// A catch binding is required for browsers old enough to lack
+			// optional catch binding (see usesLegacyEventModel above);
+			// localStorage being disabled/unavailable (e.g. private
+			// browsing) is routine, not worth logging.
+			// eslint-disable-next-line no-unused-vars
+		} catch ( error ) {
 			return null;
 		}
 	};
