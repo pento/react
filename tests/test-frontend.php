@@ -241,4 +241,53 @@ class React_Test_Frontend extends WP_UnitTestCase {
 
 		$this->assertEquals( 1, $react->get_reaction_count( $post_id ) );
 	}
+
+	/**
+	 * Test that the reaction count cache is invalidated when a reaction is
+	 * deleted, rather than continuing to serve the pre-deletion count
+	 * forever.
+	 */
+	public function test_reaction_count_cache_invalidated_on_delete() {
+		$react = React::init();
+
+		$post_id = $this->factory->post->create();
+
+		$comment_id = $this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_approved' => 1,
+			)
+		);
+
+		$this->assertEquals( 1, $react->get_reaction_count( $post_id ) );
+
+		wp_delete_comment( $comment_id, true );
+
+		$this->assertEquals( 0, $react->get_reaction_count( $post_id ) );
+	}
+
+	/**
+	 * Test that the reaction count cache is invalidated when a reaction's
+	 * comment status changes, e.g. via bulk moderation in wp-admin.
+	 */
+	public function test_reaction_count_cache_invalidated_on_status_change() {
+		$react = React::init();
+
+		$post_id = $this->factory->post->create();
+
+		$comment_id = $this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_approved' => 1,
+			)
+		);
+
+		$this->assertEquals( 1, $react->get_reaction_count( $post_id ) );
+
+		wp_spam_comment( $comment_id );
+
+		$this->assertEquals( 0, $react->get_reaction_count( $post_id ) );
+	}
 }
