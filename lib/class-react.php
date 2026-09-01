@@ -213,8 +213,9 @@ class React {
 	 * @return int Number of reactions the post has.
 	 */
 	public function get_reaction_count( $post_id ) {
-		$post_id = (int) $post_id;
-		$cached  = wp_cache_get( $post_id, 'react_reaction_counts' );
+		$post_id     = (int) $post_id;
+		$cache_group = $this->get_reaction_count_cache_group();
+		$cached      = wp_cache_get( $post_id, $cache_group );
 
 		if ( false !== $cached ) {
 			return (int) $cached;
@@ -228,9 +229,34 @@ class React {
 			)
 		);
 
-		wp_cache_set( $post_id, $count, 'react_reaction_counts', HOUR_IN_SECONDS );
+		/**
+		 * Filters the TTL, in seconds, of the cached per-post reaction count.
+		 *
+		 * @param int $ttl Cache TTL in seconds. Default HOUR_IN_SECONDS.
+		 */
+		$ttl = apply_filters( 'react_reaction_count_cache_ttl', HOUR_IN_SECONDS );
+
+		wp_cache_set( $post_id, $count, $cache_group, $ttl );
 
 		return $count;
+	}
+
+	/**
+	 * Get the cache group the per-post reaction count is stored under.
+	 *
+	 * Used consistently by get_reaction_count() (get + set) and
+	 * invalidate_reaction_count_cache() (delete), so all three stay in
+	 * sync if this is filtered.
+	 *
+	 * @return string The cache group name.
+	 */
+	private function get_reaction_count_cache_group() {
+		/**
+		 * Filters the cache group the per-post reaction count is stored under.
+		 *
+		 * @param string $cache_group Cache group name. Default 'react_reaction_counts'.
+		 */
+		return apply_filters( 'react_reaction_count_cache_group', 'react_reaction_counts' );
 	}
 
 	/**
@@ -246,7 +272,7 @@ class React {
 
 		$post_id = (int) $comment->comment_post_ID;
 
-		wp_cache_delete( $post_id, 'react_reaction_counts' );
+		wp_cache_delete( $post_id, $this->get_reaction_count_cache_group() );
 
 		/**
 		 * Fires after a post's cached reaction count has been invalidated.
@@ -308,27 +334,70 @@ class React {
 	 * decides it's actually needed and injects it itself.
 	 */
 	public function print_selector() {
+		$categories = array(
+			array(
+				'label' => __( 'People', 'react' ),
+				'emoji' => __( '😀', 'react' ),
+			),
+			array(
+				'label' => __( 'Nature', 'react' ),
+				'emoji' => __( '🌿', 'react' ),
+			),
+			array(
+				'label' => __( 'Food', 'react' ),
+				'emoji' => __( '🍔', 'react' ),
+			),
+			array(
+				'label' => __( 'Activity', 'react' ),
+				'emoji' => __( '⚽️', 'react' ),
+			),
+			array(
+				'label' => __( 'Places', 'react' ),
+				'emoji' => __( '✈️', 'react' ),
+			),
+			array(
+				'label' => __( 'Objects', 'react' ),
+				'emoji' => __( '💡', 'react' ),
+			),
+			array(
+				'label' => __( 'Symbols', 'react' ),
+				'emoji' => __( '❤', 'react' ),
+			),
+			array(
+				'label' => __( 'Flags', 'react' ),
+				'emoji' => __( '🇺🇸', 'react' ),
+			),
+		);
+
+		/**
+		 * Filters the emoji picker's categories.
+		 *
+		 * Each entry is an array with 'label' and 'emoji' keys, rendered
+		 * as one picker tab, in array order (index 0 first).
+		 *
+		 * Known limitation: static/react.js only ever looks for tab/
+		 * container indexes 0-7 (populateReactionPopup(),
+		 * changeReactionTab() both hard-loop that range), so this filter
+		 * can safely reorder, relabel, or drop categories from the
+		 * existing 8 -- but an entry added past index 7 will render
+		 * inert markup that the JS never populates or makes reachable.
+		 * Making the JS side fully dynamic isn't part of what this
+		 * filter covers.
+		 *
+		 * @param array $categories Array of { label, emoji } category pairs.
+		 */
+		$categories = apply_filters( 'react_categories', $categories );
 		?>
 			<script type="text/html" id="tmpl-emoji-reaction-selector">
 				<div id="emoji-reaction-selector">
 					<div class="tabs">
-						<div data-tab="0" aria-label="<?php echo esc_attr__( 'People', 'react' ); ?>" title="<?php echo esc_attr__( 'People', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '😀', 'react' ); ?></div>
-						<div data-tab="1" aria-label="<?php echo esc_attr__( 'Nature', 'react' ); ?>" title="<?php echo esc_attr__( 'Nature', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '🌿', 'react' ); ?></div>
-						<div data-tab="2" aria-label="<?php echo esc_attr__( 'Food', 'react' ); ?>" title="<?php echo esc_attr__( 'Food', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '🍔', 'react' ); ?></div>
-						<div data-tab="3" aria-label="<?php echo esc_attr__( 'Activity', 'react' ); ?>" title="<?php echo esc_attr__( 'Activity', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '⚽️', 'react' ); ?></div>
-						<div data-tab="4" aria-label="<?php echo esc_attr__( 'Places', 'react' ); ?>" title="<?php echo esc_attr__( 'Places', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '✈️', 'react' ); ?></div>
-						<div data-tab="5" aria-label="<?php echo esc_attr__( 'Objects', 'react' ); ?>" title="<?php echo esc_attr__( 'Objects', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '💡', 'react' ); ?></div>
-						<div data-tab="6" aria-label="<?php echo esc_attr__( 'Symbols', 'react' ); ?>" title="<?php echo esc_attr__( 'Symbols', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '❤', 'react' ); ?></div>
-						<div data-tab="7" aria-label="<?php echo esc_attr__( 'Flags', 'react' ); ?>" title="<?php echo esc_attr__( 'Flags', 'react' ); ?>" class="emoji-reaction-tab"><?php echo esc_html__( '🇺🇸', 'react' ); ?></div>
+						<?php foreach ( $categories as $index => $category ) : ?>
+							<div data-tab="<?php echo esc_attr( $index ); ?>" aria-label="<?php echo esc_attr( $category['label'] ); ?>" title="<?php echo esc_attr( $category['label'] ); ?>" class="emoji-reaction-tab"><?php echo esc_html( $category['emoji'] ); ?></div>
+						<?php endforeach; ?>
 					</div>
-					<div class="container container-0"></div>
-					<div class="container container-1"></div>
-					<div class="container container-2"></div>
-					<div class="container container-3"></div>
-					<div class="container container-4"></div>
-					<div class="container container-5"></div>
-					<div class="container container-6"></div>
-					<div class="container container-7"></div>
+					<?php foreach ( array_keys( $categories ) as $index ) : ?>
+						<div class="container container-<?php echo esc_attr( $index ); ?>"></div>
+					<?php endforeach; ?>
 				</div>
 			</script>
 		<?php
