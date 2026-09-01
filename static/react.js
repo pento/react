@@ -123,14 +123,19 @@
 	 * rather than as live markup, so that it isn't reachable in the DOM
 	 * (e.g. by a screen reader) until it's actually needed.
 	 *
+	 * This deliberately never looks up an existing #emoji-reaction-selector
+	 * via getElementById() first: that ID isn't reserved, and post content
+	 * saved by a user without unfiltered_html can still contain a div with
+	 * an arbitrary id (wp_kses_post() allows the id attribute), so a
+	 * getElementById() lookup here could pick up attacker-controlled markup
+	 * and treat it as the trusted popup. populateReactionPopup() already
+	 * caches the element this function returns and never calls it again
+	 * once that succeeds, so tracking our own reference is both sufficient
+	 * and safe.
+	 *
 	 * @return {HTMLElement|null} The selector popup element, or null if the template is missing.
 	 */
 	const getPopup = function () {
-		const existing = document.getElementById( 'emoji-reaction-selector' );
-		if ( existing ) {
-			return existing;
-		}
-
 		const template = document.getElementById(
 			'tmpl-emoji-reaction-selector'
 		);
