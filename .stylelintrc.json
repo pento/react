@@ -1,0 +1,10 @@
+{
+	"extends": "@wordpress/stylelint-config/scss-stylistic",
+	"rules": {
+		"selector-class-pattern": null,
+		"rule-empty-line-before": [
+			"always",
+			{ "ignore": [ "after-comment", "first-nested" ] }
+		]
+	}
+}
