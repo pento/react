@@ -8,6 +8,15 @@
 	let loading = false;
 
 	/**
+	 * Whether we're stuck with the legacy attachEvent() event model (IE8 and
+	 * below), where event.button is a bitmask (primary = 1) rather than the
+	 * modern enumeration (primary = 0).
+	 *
+	 * @type {boolean}
+	 */
+	const usesLegacyEventModel = ! document.addEventListener;
+
+	/**
 	 * Flag to show if the emoji JSON blob is loaded
 	 *
 	 * @type {boolean}
@@ -49,6 +58,14 @@
 		}
 
 		event = event || window.event;
+
+		// Only the primary (usually left) mouse button should add a reaction.
+		if (
+			'button' in event &&
+			( usesLegacyEventModel ? 1 : 0 ) !== event.button
+		) {
+			return;
+		}
 
 		const el = event.target || event.srcElement;
 
