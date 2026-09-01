@@ -139,7 +139,16 @@
 		const template = document.getElementById(
 			'tmpl-emoji-reaction-selector'
 		);
-		if ( ! template ) {
+
+		// As with #emoji-reaction-selector above, this ID isn't reserved
+		// either -- confirm this is actually the <script type="text/html">
+		// element print_selector() prints, not some other element that
+		// happens to share its id, before trusting its innerHTML.
+		if (
+			! template ||
+			'SCRIPT' !== template.tagName ||
+			'text/html' !== template.type
+		) {
 			return null;
 		}
 
