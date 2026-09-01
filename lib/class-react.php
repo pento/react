@@ -25,7 +25,7 @@ class React {
 
 		add_action( 'rest_api_init', array( $this->api, 'register_routes' ) );
 		add_action( 'wp_insert_comment', array( $this, 'invalidate_reaction_count_cache' ), 10, 2 );
-		add_action( 'deleted_comment', array( $this, 'invalidate_reaction_count_cache' ), 10, 2 );
+		add_action( 'delete_comment', array( $this, 'invalidate_reaction_count_cache_on_delete' ), 10, 1 );
 		add_action( 'transition_comment_status', array( $this, 'invalidate_reaction_count_cache_on_status_change' ), 10, 3 );
 
 		if ( is_admin() ) {
@@ -180,7 +180,8 @@ class React {
 	 * This runs on every call to get_comments_number(), which can mean once
 	 * per post on an archive page -- caching this avoids a COUNT query per
 	 * post per page load.
-	 * The cache is invalidated in invalidate_reaction_count_cache() and
+	 * The cache is invalidated in invalidate_reaction_count_cache(),
+	 * invalidate_reaction_count_cache_on_delete(), and
 	 * invalidate_reaction_count_cache_on_status_change() whenever a reaction
 	 * comment is inserted, deleted, or changes status (e.g. trashed,
 	 * spammed, or un/approved), and otherwise expires after an hour as a
@@ -205,14 +206,13 @@ class React {
 			)
 		);
 
-		wp_cache_set( $post_id, $count, 'react_reaction_counts', '', HOUR_IN_SECONDS );
+		wp_cache_set( $post_id, $count, 'react_reaction_counts', HOUR_IN_SECONDS );
 
 		return $count;
 	}
 
 	/**
-	 * Invalidate the cached reaction count for a post when a reaction is
-	 * added or deleted.
+	 * Invalidate the cached reaction count for a post when a reaction is added.
 	 *
 	 * @param int        $id      The comment ID.
 	 * @param WP_Comment $comment The comment object.
@@ -223,6 +223,30 @@ class React {
 		}
 
 		wp_cache_delete( (int) $comment->comment_post_ID, 'react_reaction_counts' );
+	}
+
+	/**
+	 * Invalidate the cached reaction count for a post when a reaction is
+	 * about to be deleted.
+	 *
+	 * Hooks 'delete_comment' rather than 'deleted_comment': the latter's
+	 * $comment parameter was only added in WP 4.9.0, and by the time it
+	 * fires the comment row is already gone, so there'd be no way to look
+	 * up its type/post on an older install. This plugin supports WP 4.4+,
+	 * and 'delete_comment' fires before removal on every supported version,
+	 * with only the comment ID guaranteed -- so look the comment up from
+	 * that while it still exists.
+	 *
+	 * @param int $comment_id The comment ID about to be deleted.
+	 */
+	public function invalidate_reaction_count_cache_on_delete( $comment_id ) {
+		$comment = get_comment( $comment_id );
+
+		if ( ! $comment ) {
+			return;
+		}
+
+		$this->invalidate_reaction_count_cache( $comment_id, $comment );
 	}
 
 	/**
