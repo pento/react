@@ -278,6 +278,89 @@
 	};
 
 	/**
+	 * Find the reaction bubble or add-button carrying a given post ID, and
+	 * return its parent -- the .emoji-reactions container for that post.
+	 *
+	 * @param {string} post The post ID.
+	 * @return {HTMLElement|null} The reactions container, or null if none was found.
+	 */
+	const findReactionsContainer = function ( post ) {
+		let candidates =
+			document.getElementsByClassName( 'emoji-reaction-add' );
+		let ii;
+
+		for ( ii = 0; ii < candidates.length; ii++ ) {
+			if ( candidates[ ii ].dataset.post === post ) {
+				return candidates[ ii ].parentElement;
+			}
+		}
+
+		candidates = document.getElementsByClassName( 'emoji-reaction' );
+		for ( ii = 0; ii < candidates.length; ii++ ) {
+			if ( candidates[ ii ].dataset.post === post ) {
+				return candidates[ ii ].parentElement;
+			}
+		}
+
+		return null;
+	};
+
+	/**
+	 * Update the visible reaction bubbles for a post from a fresh summary,
+	 * so a reaction appears immediately rather than only on the next page
+	 * load.
+	 *
+	 * @param {string} post    The post ID the reaction was added to.
+	 * @param {Array}  summary Reaction summary groups, as returned by the reactions REST endpoint.
+	 */
+	const updateReactionDisplay = function ( post, summary ) {
+		const container = findReactionsContainer( post );
+		if ( ! container ) {
+			return;
+		}
+
+		const addButton =
+			container.getElementsByClassName( 'emoji-reaction-add' )[ 0 ] ||
+			null;
+
+		for ( let ii = 0; ii < summary.length; ii++ ) {
+			const group = summary[ ii ];
+			const bubbles =
+				container.getElementsByClassName( 'emoji-reaction' );
+			let bubble = null;
+
+			for ( let jj = 0; jj < bubbles.length; jj++ ) {
+				if ( bubbles[ jj ].dataset.emoji === group.emoji ) {
+					bubble = bubbles[ jj ];
+					break;
+				}
+			}
+
+			if ( ! bubble ) {
+				bubble = document.createElement( 'div' );
+				bubble.className = 'emoji-reaction';
+				bubble.dataset.emoji = group.emoji;
+				bubble.dataset.post = post;
+
+				const emojiEl = document.createElement( 'div' );
+				emojiEl.className = 'emoji';
+				emojiEl.textContent = group.emoji;
+				bubble.appendChild( emojiEl );
+
+				const countEl = document.createElement( 'div' );
+				countEl.className = 'count';
+				bubble.appendChild( countEl );
+
+				container.insertBefore( bubble, addButton );
+			}
+
+			bubble.dataset.count = group.count;
+			bubble.getElementsByClassName( 'count' )[ 0 ].textContent =
+				group.count;
+		}
+	};
+
+	/**
 	 * Send a reaction message back to the server
 	 *
 	 * @param {HTMLElement} el The button that was clicked
@@ -298,6 +381,26 @@
 			encodeURIComponent( el.dataset.emoji );
 
 		const xhr = new XMLHttpRequest();
+
+		xhr.onreadystatechange = function () {
+			if ( xhr.readyState !== XMLHttpRequest.DONE ) {
+				return;
+			}
+
+			if ( 200 !== xhr.status ) {
+				return;
+			}
+
+			try {
+				updateReactionDisplay( post, JSON.parse( xhr.responseText ) );
+			} catch ( error ) {
+				// The reaction was still recorded server-side even if we
+				// can't reflect it immediately; it'll show up on reload.
+				if ( window.console && window.console.warn ) {
+					window.console.warn( error );
+				}
+			}
+		};
 
 		xhr.open( 'POST', settings.endpoint, true );
 
