@@ -167,7 +167,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 
 	/**
 	 * Create a reaction, or remove it if the same user/visitor already
-	 * reacted with this emoji on this post.
+	 * reacted the same way on this post.
 	 *
 	 * @param  WP_REST_Request $request Full details about the request.
 	 * @return WP_Error|WP_REST_Response
@@ -188,7 +188,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 			 *
 			 * @param int    $comment_id The removed reaction's comment ID.
 			 * @param int    $post_id    The post the reaction was removed from.
-			 * @param string $emoji      The reaction emoji.
+			 * @param string $emoji      The reaction: an emoji, or a custom icon reference.
 			 */
 			do_action( 'react_reaction_removed', $existing_id, $post_id, $emoji );
 
@@ -237,7 +237,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 			 *
 			 * @param int    $comment_id The new reaction's comment ID.
 			 * @param int    $post_id    The post the reaction was added to.
-			 * @param string $emoji      The reaction emoji.
+			 * @param string $emoji      The reaction: an emoji, or a custom icon reference.
 			 */
 			do_action( 'react_reaction_created', $comment_id, $post_id, $emoji );
 		}
@@ -250,7 +250,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	 * visitors, the same client id) with the same emoji on the same post.
 	 *
 	 * @param  int    $post_id   The post ID.
-	 * @param  string $emoji     The reaction emoji.
+	 * @param  string $emoji     The reaction: an emoji, or a custom icon reference.
 	 * @param  int    $user_id   The current user ID, or 0 if logged out.
 	 * @param  string $client_id Anonymous per-browser identifier, or '' if none was sent.
 	 * @return int The existing reaction's comment ID, or 0 if none was found.
@@ -419,7 +419,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 
 		$query_params['emoji'] = array(
 			'required'          => true,
-			'description'       => __( 'The reaction emoji.', 'react' ),
+			'description'       => __( 'The reaction: an emoji, or a custom icon reference such as "icon:react-custom/heart".', 'react' ),
 			'type'              => 'string',
 			'minLength'         => 1,
 			'validate_callback' => array( $this, 'validate_emoji' ),
@@ -459,9 +459,14 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 		}
 
 		if ( ! React_Settings::is_known_reaction( $value ) ) {
+			/*
+			 * The error code stays 'rest_invalid_emoji' for compatibility with
+			 * anything already checking for it, even though the message no
+			 * longer says "emoji" -- a reaction can also be a custom icon.
+			 */
 			return new WP_Error(
 				'rest_invalid_emoji',
-				__( 'Sorry, that is not a recognized reaction emoji.', 'react' ),
+				__( 'Sorry, that is not a recognized reaction.', 'react' ),
 				array( 'status' => 400 )
 			);
 		}

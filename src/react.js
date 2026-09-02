@@ -572,7 +572,7 @@ const getClientId = function () {
  * Send a reaction message back to the server
  *
  * @param {string} post  The post ID to react to.
- * @param {string} emoji The reaction emoji.
+ * @param {string} emoji The reaction: an emoji, or a custom icon reference.
  */
 const react = function ( post, emoji ) {
 	let params =
