@@ -7,6 +7,3 @@ vendor/*
 !vendor/.gitkeep
 .phpunit.result.cache
 /node_modules
-
-# Regenerated on demand by tools/compile_emoji.php from upstream emoji-data; not runtime data.
-/static/emoji-raw.json

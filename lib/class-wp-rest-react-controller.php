@@ -471,9 +471,11 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	 * Build the set of emoji the reaction picker offers, keyed by the emoji
 	 * character itself for constant-time lookups.
 	 *
-	 * Reads from the same compiled dataset (static/emoji.json) that the
-	 * front-end picker renders from, so only emoji actually surfaced in the
-	 * UI can ever be accepted from the API.
+	 * Reads from the same self-hosted dataset (static/emoji-data.json,
+	 * copied from the emoji-picker-element-data npm package by
+	 * tools/copy-emoji-data.js) that the front-end picker renders from, so
+	 * only emoji actually surfaced in the UI can ever be accepted from the
+	 * API.
 	 *
 	 * @return array<string, true> Map of emoji character => true.
 	 */
@@ -485,7 +487,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 		}
 
 		$allowed = array();
-		$path    = dirname( __DIR__ ) . '/static/emoji.json';
+		$path    = dirname( __DIR__ ) . '/static/emoji-data.json';
 
 		if ( ! is_readable( $path ) ) {
 			return $allowed;
@@ -494,16 +496,14 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 		$contents = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local file, not a remote request.
 		$data     = json_decode( (string) $contents, true );
 
-		foreach ( (array) $data as $category ) {
-			foreach ( (array) $category as $codepoints ) {
-				$char = '';
-				foreach ( (array) $codepoints as $hex ) {
-					// Build the UTF-8 character from its codepoint without requiring ext-mbstring.
-					$char .= html_entity_decode( '&#' . intval( $hex, 16 ) . ';', ENT_QUOTES, 'UTF-8' );
-				}
+		foreach ( (array) $data as $entry ) {
+			if ( ! empty( $entry['emoji'] ) ) {
+				$allowed[ $entry['emoji'] ] = true;
+			}
 
-				if ( '' !== $char ) {
-					$allowed[ $char ] = true;
+			foreach ( (array) ( $entry['skins'] ?? array() ) as $skin ) {
+				if ( ! empty( $skin['emoji'] ) ) {
+					$allowed[ $skin['emoji'] ] = true;
 				}
 			}
 		}

@@ -8,7 +8,6 @@
 	<exclude-pattern>/node_modules/</exclude-pattern>
 	<exclude-pattern>/tests/bootstrap.php</exclude-pattern>
 	<exclude-pattern>/tests/class-wp-test-*</exclude-pattern>
-	<exclude-pattern>/tools/compile_emoji.php</exclude-pattern>
 
 	<!-- How to scan -->
 	<arg value="sp"/>

@@ -24,8 +24,11 @@ A REST route is registered at `/wp/v2/react`:
 - `GET /wp/v2/react?post[]=123` -- list reaction tallies for one or more posts. Returns an
   array of `{ emoji, count, post_id }` groups, with `X-WP-Total`/`X-WP-TotalGroups` response
   headers.
-- `POST /wp/v2/react` -- add a reaction. Requires a `post` (post ID) and `emoji` (one of the
-  emoji offered by the picker) param, plus a valid REST nonce.
+- `POST /wp/v2/react` -- add a reaction, or remove it if the current user/visitor already
+  reacted with this emoji on this post (a toggle). Requires a `post` (post ID) and `emoji` (one
+  of the emoji offered by the picker) param, plus a valid REST nonce. Accepts an optional
+  `client_id` param -- a per-browser identifier logged-out visitors can send to toggle their
+  own reactions off; logged-in reactions are toggled by user ID instead.
 
 Additional background at https://make.wordpress.org/core/2016/03/07/reactions/.
 
@@ -42,9 +45,9 @@ Additional background at https://make.wordpress.org/core/2016/03/07/reactions/.
 | `rest_reaction_query` | filter | Before querying reactions via the REST API -- filters the `WP_Comment_Query` args. |
 | `rest_prepare_reaction` | filter | After a reaction group is prepared for a REST response. |
 | `react_reaction_created` | action | After a new reaction comment is inserted. |
+| `react_reaction_removed` | action | After a reaction comment is removed by toggling it off (reacting again with the same emoji). |
 | `react_reaction_count_invalidated` | action | After a post's cached reaction count is invalidated (on insert, delete, or status change). |
 | `react_reaction_markup` | filter | Filters the reactions widget's HTML before it's appended to the post content. |
-| `react_categories` | filter | Filters the emoji picker's category list. See the filter's own docblock in `print_selector()` for a known limitation on adding more than 8 categories. |
 | `react_reaction_count_cache_group` | filter | Filters the cache group the per-post reaction count is stored under. |
 | `react_reaction_count_cache_ttl` | filter | Filters the cache TTL (in seconds) for the per-post reaction count. |
 
@@ -60,6 +63,19 @@ See [SECURITY.md](SECURITY.md) to report a vulnerability.
 
 ### Unreleased ###
 
+* Swaps the hand-rolled emoji picker for the third-party
+  [`emoji-picker-element`](https://github.com/nolanlawson/emoji-picker-element) web component
+  (Apache-2.0 licensed, compatible with this plugin's GPLv2-or-later license via the "or later"
+  clause) -- see [issue #7](https://github.com/pento/react/issues/7). This adds a build step
+  (`npm run build`, see [AGENTS.md](AGENTS.md)) and drops support for browsers old enough to
+  lack `document.addEventListener()`. **Breaking:** removes the `react_categories` filter --
+  the new picker manages its own category grid internally, with no equivalent per-category
+  customization hook.
+* Fixes reactions always being attributed to "Anonymous", even when the reacting user is logged
+  in.
+* Adds the ability to remove a reaction by reacting again with the same emoji (a toggle), for
+  both logged-in users and logged-out visitors (via a per-browser identifier kept in
+  `localStorage`, never sent except with a reaction request).
 * Adds a GitHub Actions CI workflow (PHPUnit across PHP 8.1-8.3, phpcs, JS lint/tests on every
   push/PR) and a new JS test suite for `static/react.js`.
 * Fixes WP 7.1 / PHP 8.5 compatibility issues.

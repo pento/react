@@ -87,3 +87,9 @@ jobs:
 
       - name: Run JS unit tests
         run: npm run test:unit
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify the committed build output is up to date
+        run: git diff --exit-code -- static/react.js static/emoji-data.json

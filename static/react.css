@@ -27,97 +27,36 @@
 	background-color: #eee;
 }
 
-#emoji-reaction-selector {
+emoji-picker {
 	position: absolute;
-	width: 300px;
+
+	/*
+	 * 400px, not 300px: the default 8-column grid needs more room than
+	 * 300px leaves once the vertical scrollbar's own width is subtracted,
+	 * which was causing a horizontal scrollbar to appear too. Matches the
+	 * width emoji-picker-element's own docs recommend for 8 columns.
+	 */
+	width: 400px;
 	height: 300px;
 	display: none;
-}
-
-#emoji-reaction-selector .tabs {
-	width: 100%;
-	height: 30px;
-	background-color: #aaa;
-	white-space: collapse;
-}
-
-#emoji-reaction-selector .tabs div {
-	float: left;
-	width: 37px;
-	height: 100%;
-	text-align: center;
-}
-
-#emoji-reaction-selector .tabs div:hover {
-	background-color: #ddd;
-}
-
-#emoji-reaction-selector .tabs div:last-child {
-	float: right;
-}
-
-#emoji-reaction-selector .container {
-	width: 100%;
-	height: 100%;
-	overflow-y: scroll;
-	background-color: #ddd;
-}
-
-#emoji-reaction-selector .emoji-reaction {
-	width: 31px;
+	z-index: 100;
 }
 
 @media only screen and ( max-width: 768px ) {
 
-	#emoji-reaction-selector {
+	emoji-picker {
 		position: fixed;
 		width: 100%;
 		height: 33%;
 		left: 0;
 		bottom: 0;
+		--num-columns: 8;
 	}
-
-	#emoji-reaction-selector .tabs {
-		height: 50px;
-	}
-
-
-	#emoji-reaction-selector .tabs div {
-		width: 12.5%;
-	}
-
-	#emoji-reaction-selector .emoji-reaction,
-	#emoji-reaction-selector .emoji-reaction-tab {
-		width: 50px;
-		height: 50px;
-	}
-
-	#emoji-reaction-selector .emoji {
-		width: 100%;
-		height: 100%;
-		padding-top: 15%;
-	}
-
-	#emoji-reaction-selector .emoji img {
-		width: 70% !important;
-		height: 70% !important;
-	}
-
-	#emoji-reaction-selector .tabs .emoji {
-		width: 1.5em !important;
-		height: 1.5em !important;
-		margin-top: 13% !important;
-	}
-
 }
 
 @media only screen and ( max-width: 480px ) {
 
-	#emoji-reaction-selector {
+	emoji-picker {
 		height: 50%;
-	}
-
-	#emoji-reaction-selector .tabs .emoji {
-		margin-top: 20% !important;
 	}
 }

@@ -5,12 +5,18 @@
 	"private": true,
 	"scripts": {
 		"lint:css": "wp-scripts lint-style 'static/*.css'",
-		"lint:js": "wp-scripts lint-js 'static/*.js'",
+		"lint:js": "wp-scripts lint-js 'src/*.js'",
 		"lint": "npm run lint:css && npm run lint:js",
-		"format": "wp-scripts format 'static/*.{css,js}'",
-		"test:unit": "wp-scripts test-unit-js"
+		"format": "wp-scripts format 'static/*.css' 'src/*.js'",
+		"test:unit": "wp-scripts test-unit-js",
+		"build:emoji-data": "node tools/copy-emoji-data.js",
+		"build": "npm run build:emoji-data && wp-scripts build"
 	},
 	"devDependencies": {
-		"@wordpress/scripts": "^34.1.0"
+		"@wordpress/scripts": "^34.1.0",
+		"emoji-picker-element-data": "^1.8.0"
+	},
+	"dependencies": {
+		"emoji-picker-element": "^1.29.1"
 	}
 }
