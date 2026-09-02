@@ -70,10 +70,28 @@ class React {
 
 		wp_enqueue_script( 'react-emoji', REACT_URL . '/static/react.js', array(), REACT_VERSION, true );
 
+		/*
+		 * Only site-wide configuration belongs here. enqueue() is called from
+		 * the constructor on `init`, so there is no queried post yet -- and
+		 * anything per-post has to be rendered as a data attribute by
+		 * self::the_content() instead.
+		 */
+		$icons = array();
+		foreach ( React_Settings::get_icons() as $slug => $icon ) {
+			$icons[ React_Settings::icon_token( $slug ) ] = array(
+				'label' => $icon['label'],
+				'svg'   => $icon['content'],
+			);
+		}
+
 		$settings = array(
-			'emoji_data_url' => esc_url_raw( REACT_URL . '/static/emoji-data.json' ),
-			'endpoint'       => esc_url_raw( get_rest_url( null, $this->api->namespace . '/' . $this->api->rest_base ) ),
-			'nonce'          => wp_create_nonce( 'wp_rest' ),
+			'emoji_data_url'   => esc_url_raw( REACT_URL . '/static/emoji-data.json' ),
+			'endpoint'         => esc_url_raw( get_rest_url( null, $this->api->namespace . '/' . $this->api->rest_base ) ),
+			'nonce'            => wp_create_nonce( 'wp_rest' ),
+			'enable_picker'    => React_Settings::get( 'react_enable_picker' ),
+			'allow_skin_tones' => React_Settings::get( 'react_allow_skin_tones' ),
+			'always_visible'   => React_Settings::get_always_visible_reactions(),
+			'icons'            => $icons,
 		);
 
 		wp_add_inline_script(
@@ -111,20 +129,83 @@ class React {
 			++$reactions_summary[ $reaction->comment_content ];
 		}
 
+		/*
+		 * Seed the configured defaults at zero so they're always offered, then
+		 * let the real tallies overwrite them. array_merge() rather than "+"
+		 * because the tallied count has to win, and because this ordering is
+		 * the point: defaults keep their configured order, and anything else
+		 * people have reacted with follows on behind.
+		 */
+		$always_visible    = array_fill_keys( React_Settings::get_always_visible_reactions(), 0 );
+		$reactions_summary = array_merge( $always_visible, $reactions_summary );
+
+		/*
+		 * Logged-out visitors on a login-gated site still see the counts, but
+		 * get a link to log in rather than a button that would be refused.
+		 */
+		$gated     = React_Settings::get( 'react_require_login' ) && ! is_user_logged_in();
+		$can_react = comments_open( $post_id ) && ! $gated;
+		$login_url = $gated ? wp_login_url( get_permalink( $post_id ) ) : '';
+
 		$markup = '<div class="emoji-reactions">';
 
 		foreach ( $reactions_summary as $emoji => $count ) {
+			$icon = React_Settings::render_icon( $emoji );
+
+			if ( '' === $icon && false !== React_Settings::parse_icon_token( $emoji ) ) {
+				/*
+				 * An icon reaction whose icon is no longer registered. Skip it
+				 * rather than rendering an empty bubble with a live count --
+				 * the comment rows survive, so restoring the icon brings them
+				 * back.
+				 */
+				continue;
+			}
+
+			$classes = 'emoji-reaction';
+			if ( 0 === $count ) {
+				$classes .= ' is-zero';
+			}
+			if ( '' !== $icon ) {
+				$classes .= ' emoji-reaction-icon';
+			}
+
+			$glyph = '' !== $icon ? $icon : esc_html( $emoji );
+
+			if ( $gated ) {
+				$markup .= sprintf(
+					"<a href='%s' data-emoji='%s' data-count='%d' data-post='%d' class='%s emoji-reaction-login'><div class='emoji'>%s</div><div class='count'>%d</div></a>",
+					esc_url( $login_url ),
+					esc_attr( $emoji ),
+					$count,
+					$post_id,
+					esc_attr( $classes ),
+					$glyph, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Either esc_html()'d above, or icon markup from wp_get_icon().
+					$count
+				);
+
+				continue;
+			}
+
 			$markup .= sprintf(
-				"<div data-emoji='%s' data-count='%d' data-post='%d' class='emoji-reaction'><div class='emoji'>%s</div><div class='count'>%d</div></div>",
+				"<div data-emoji='%s' data-count='%d' data-post='%d' class='%s'><div class='emoji'>%s</div><div class='count'>%d</div></div>",
 				esc_attr( $emoji ),
 				$count,
 				$post_id,
-				esc_html( $emoji ),
+				esc_attr( $classes ),
+				$glyph, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Either esc_html()'d above, or icon markup from wp_get_icon().
 				$count
 			);
 		}
 
-		if ( comments_open( $post_id ) ) {
+		if ( $gated && comments_open( $post_id ) ) {
+			$markup .= sprintf(
+				"<a href='%s' data-post='%d' class='emoji-reaction-add emoji-reaction-login'><div class='emoji'>%s</div></a>",
+				esc_url( $login_url ),
+				$post_id,
+				esc_html__( 'Log in to react', 'react' )
+			);
+		} elseif ( $can_react && React_Settings::get( 'react_enable_picker' ) ) {
 			/* translators: This is the emoji used for the "Add new emoji reaction" button */
 			$markup .= "<div data-post='$post_id' class='emoji-reaction-add'><div class='emoji'>" . __( '😃+', 'react' ) . '</div></div>';
 		}

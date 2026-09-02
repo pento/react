@@ -1,0 +1,82 @@
+/*
+ * Styles for the Reactions section on Settings > Discussion.
+ *
+ * Hand-authored rather than build output, and intentionally leaning on core's
+ * own admin classes (button, button-link, description) for everything else.
+ */
+
+.react-emoji-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin: 0 0 8px;
+	padding: 0;
+	list-style: none;
+}
+
+.react-emoji-item {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	margin: 0;
+	padding: 2px 4px;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.react-emoji-item-glyph {
+	font-size: 20px;
+	line-height: 1.2;
+}
+
+.react-emoji-remove {
+	color: #b32d2e;
+	text-decoration: none;
+	font-size: 16px;
+	line-height: 1;
+}
+
+.react-emoji-remove:hover {
+	color: #8a1f20;
+}
+
+#react-emoji-picker {
+	margin: 0 0 8px;
+}
+
+#react-emoji-picker emoji-picker {
+	position: static;
+	display: block;
+	width: 340px;
+	height: 300px;
+}
+
+.react-icon-list {
+	margin: 0 0 8px;
+	padding: 0;
+	list-style: none;
+}
+
+.react-icon-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 4px;
+	padding: 4px 0;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.react-icon-item-preview svg {
+	width: 24px;
+	height: 24px;
+	fill: currentcolor;
+}
+
+.react-icon-item-label {
+	font-weight: 600;
+}
+
+.react-icon-item-slug {
+	color: #646970;
+}

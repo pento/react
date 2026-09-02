@@ -1,5 +1,5 @@
 /**
- * Custom webpack config for bundling `src/react.js` into `static/react.js`.
+ * Custom webpack config for bundling `src/*.js` into `static/*.js`.
  *
  * This plugin isn't a block (no `block.json`s for @wordpress/scripts to
  * auto-discover an entry from), so the default config's block-oriented
@@ -25,6 +25,10 @@ module.exports = {
 	...defaultConfig,
 	entry: {
 		react: path.resolve( __dirname, 'src/react.js' ),
+		// Settings > Discussion needs the emoji picker, but must not load
+		// the front-end bundle -- that installs a document-level click
+		// handler that posts reactions.
+		'react-admin': path.resolve( __dirname, 'src/react-admin.js' ),
 	},
 	output: {
 		...defaultConfig.output,

@@ -38,6 +38,57 @@ Additional background at https://make.wordpress.org/core/2016/03/07/reactions/.
    plugins screen directly.
 2. Activate the plugin through the 'Plugins' screen in WordPress.
 
+## Settings ##
+
+Settings > Discussion gains a **Reactions** section:
+
+* **Default reactions** -- emoji shown under every post, even before anyone has reacted, so
+  visitors can react in one click. Reorder by removing and re-adding; the display order is the
+  order they're listed in.
+* **Emoji picker** -- turn off to hide the picker button, restricting reactions to the default
+  set above ([#14](https://github.com/pento/react/issues/14)).
+* **Skin tones** -- turn off to record reactions with the default skin tone.
+* **Reacting** -- require visitors to be logged in. Counts stay visible to everyone; logged-out
+  visitors get a link to the log in screen ([#32](https://github.com/pento/react/issues/32)).
+* **Custom reaction icons** -- upload SVGs to use as reactions alongside emoji, registered
+  through the [Icon Registration API](https://developer.wordpress.org/news/2026/08/hands-on-with-the-wordpress-7-1-icon-registration-api/)
+  added in WordPress 7.1. Custom icons always appear as one-click reactions under the post,
+  in the same row as the default emoji -- by design, they aren't listed inside the emoji
+  picker (see below).
+
+Every one of these is enforced in the REST controller, not just in the browser --
+`POST /wp/v2/react` is a public route, so the JavaScript side is only ever a convenience.
+
+Settings changes are never retroactive. Turning off skin tones or the picker, or retiring a
+custom icon, stops *new* reactions of that kind without stranding any that visitors have
+already left: those keep rendering, and stay removable.
+
+### Custom reaction icons ###
+
+WordPress sanitizes registered icons hard, and it's worth knowing the shape of that before
+preparing artwork:
+
+* **SVG only** -- PNG and JPEG can't be registered as icons at all.
+* Only `<svg>`, `<path>` and `<polygon>` survive. `<g>`, `<circle>`, `<rect>`, gradients and
+  the rest are stripped, and because sanitization keeps the *children* of a stripped element, a
+  `<g transform="...">` wrapper would silently disappear and leave its paths misplaced.
+* `stroke` attributes are stripped, so outline icon sets (Feather, Lucide, Heroicons outline)
+  render as solid blobs.
+
+Rather than let any of that fail quietly, uploads are checked up front and rejected with an
+explanation. Flatten artwork to filled paths first.
+
+Uploads are handled entirely server-side: the file itself is posted to WordPress, read, and
+sanitized there. Only the resulting markup is stored, in a non-autoloaded option -- the file is
+never moved into the uploads directory and never becomes an attachment, so SVG stays disabled
+as an upload type site-wide and nothing is added to your media library.
+
+Custom icons are offered as always-visible reactions rather than as entries in the emoji
+picker. That's deliberate: the picker's own custom-emoji support needs an image *URL* per
+entry, which would mean re-encoding every icon as a data URI purely so it could be browsed
+alongside 1,900 emoji it has nothing in common with. Treating them as prepopulated reactions is
+both simpler and a better fit for what they're for -- a small, curated set specific to the site.
+
 ## Hooks ##
 
 | Hook | Type | Fires |
@@ -63,6 +114,19 @@ See [SECURITY.md](SECURITY.md) to report a vulnerability.
 
 ### Unreleased ###
 
+* Added a **Reactions** section to Settings > Discussion: configurable default reactions, an
+  optional emoji picker, a skin tone toggle, an option to require visitors to be logged in, and
+  custom SVG reaction icons registered via the WordPress 7.1 Icon Registration API. Every
+  setting is enforced server-side in the REST controller, and settings changes never strand
+  reactions that have already been left. Closes
+  [#14](https://github.com/pento/react/issues/14); addresses the authentication half of
+  [#32](https://github.com/pento/react/issues/32) (rate limiting is still open).
+* Fixed a click on the reactions container's own padding being treated as a click on a
+  reaction, which POSTed `post=undefined&emoji=undefined`. The walk-up in `reactionClick()` now
+  matches exact class tokens, rather than substrings -- the container's own class,
+  `emoji-reactions`, contains `emoji-reaction`.
+* Fixed a reaction toggled back off keeping a stale count until the next page load;
+  `updateReactionDisplay()` now reconciles bubbles the summary no longer mentions.
 * Swaps the hand-rolled emoji picker for the third-party
   [`emoji-picker-element`](https://github.com/nolanlawson/emoji-picker-element) web component
   (Apache-2.0 licensed, compatible with this plugin's GPLv2-or-later license via the "or later"

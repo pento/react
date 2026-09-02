@@ -92,4 +92,4 @@ jobs:
         run: npm run build
 
       - name: Verify the committed build output is up to date
-        run: git diff --exit-code -- static/react.js static/emoji-data.json
+        run: git diff --exit-code -- static/react.js static/react-admin.js static/emoji-data.json

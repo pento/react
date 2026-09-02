@@ -4,6 +4,46 @@ import 'emoji-picker-element';
 const settings = window.wp.react.settings;
 
 /**
+ * Prefix marking a reaction as a custom icon rather than an emoji.
+ *
+ * @type {string}
+ */
+const ICON_PREFIX = 'icon:';
+
+/**
+ * Read a boolean reaction setting.
+ *
+ * Read at call time rather than destructured at module scope, so that a
+ * settings payload which predates a given key still works, and so the test
+ * suite can change window.wp.react.settings between cases.
+ *
+ * @param {string}  key      The setting name.
+ * @param {boolean} fallback Value to use when the setting is absent.
+ * @return {boolean} The setting value.
+ */
+const settingEnabled = function ( key, fallback ) {
+	return undefined === settings[ key ] ? fallback : !! settings[ key ];
+};
+
+/**
+ * Whether visitors may pick any emoji, rather than just the configured set.
+ *
+ * @return {boolean} Whether the picker is enabled.
+ */
+const pickerEnabled = function () {
+	return settingEnabled( 'enable_picker', true );
+};
+
+/**
+ * Whether skin tone variations may be used.
+ *
+ * @return {boolean} Whether skin tones are allowed.
+ */
+const skinTonesAllowed = function () {
+	return settingEnabled( 'allow_skin_tones', true );
+};
+
+/**
  * Pointer to the lazily-created <emoji-picker> element.
  *
  * @type {HTMLElement|null}
@@ -39,14 +79,31 @@ const reactionClick = function ( event ) {
 
 	let parent = event.target;
 	while ( parent ) {
-		if (
-			'DIV' === parent.nodeName &&
-			parent.className &&
-			typeof parent.className === 'string' &&
-			parent.className.indexOf( 'emoji-reaction' ) !== -1
-		) {
-			break;
+		if ( parent.classList ) {
+			// On a login-gated site the bubbles are real links to
+			// wp-login.php. Let the browser navigate.
+			if ( parent.classList.contains( 'emoji-reaction-login' ) ) {
+				return;
+			}
+
+			// Stop at the container rather than walking past it. Its class,
+			// 'emoji-reactions', contains 'emoji-reaction' as a substring, so
+			// matching on substrings treated a click on the container's own
+			// padding as a click on a bubble and posted
+			// post=undefined&emoji=undefined.
+			if ( parent.classList.contains( 'emoji-reactions' ) ) {
+				parent = null;
+				break;
+			}
+
+			if (
+				parent.classList.contains( 'emoji-reaction-add' ) ||
+				parent.classList.contains( 'emoji-reaction' )
+			) {
+				break;
+			}
 		}
+
 		parent = parent.parentElement;
 	}
 
@@ -64,15 +121,22 @@ const reactionClick = function ( event ) {
 		return;
 	}
 
-	if ( parent.className.indexOf( 'emoji-reaction-add' ) !== -1 ) {
+	if ( parent.classList.contains( 'emoji-reaction-add' ) ) {
 		event.preventDefault();
 		event.stopPropagation();
+
+		// The button is rendered server-side and the page may be cached, so
+		// it can outlive the setting that produced it.
+		if ( ! pickerEnabled() ) {
+			return;
+		}
+
 		if ( ! picker || 'none' === picker.style.display ) {
 			showReactionPicker( parent );
 		} else {
 			hideReactionPicker();
 		}
-	} else if ( parent.className.indexOf( 'emoji-reaction' ) !== -1 ) {
+	} else {
 		event.preventDefault();
 		event.stopPropagation();
 		react( parent.dataset.post, parent.dataset.emoji );
@@ -107,9 +171,19 @@ const getOrCreatePicker = function () {
 		// did nothing). event.detail.emoji.unicode is the same field on
 		// the full emoji record the library always resolves the clicked
 		// item to, and is reliably present.
-		const unicode =
-			event.detail.unicode ||
-			( event.detail.emoji && event.detail.emoji.unicode );
+		//
+		// It doubles as the exact base emoji when skin tones are turned
+		// off: event.detail.unicode is the tone-adjusted variant, while
+		// event.detail.emoji.unicode is the dataset's untoned entry. Taking
+		// the base from the library's own record beats stripping modifier
+		// codepoints ourselves, which can't be done reliably -- a base
+		// emoji often carries a trailing variation selector its toned
+		// variants don't, and multi-person emoji change codepoint sequence
+		// altogether when toned.
+		const base = event.detail.emoji && event.detail.emoji.unicode;
+		const unicode = skinTonesAllowed()
+			? event.detail.unicode || base
+			: base || event.detail.unicode;
 
 		if ( unicode ) {
 			react( picker.dataset.post, unicode );
@@ -118,9 +192,55 @@ const getOrCreatePicker = function () {
 		hideReactionPicker();
 	} );
 
+	// The library's unicodeWithSkin() returns the base emoji whenever the
+	// current skin tone is falsy, so this -- not the cosmetic hiding done by
+	// hideSkinTonePicker() -- is what actually keeps toned reactions from
+	// being submitted. Guarded because the element only exposes .database
+	// once the custom element has been defined.
+	if ( ! skinTonesAllowed() && picker.database ) {
+		const stored = picker.database.setPreferredSkinTone( 0 );
+
+		if ( stored && 'function' === typeof stored.catch ) {
+			stored.catch( function () {} );
+		}
+	}
+
 	document.body.appendChild( picker );
 
 	return picker;
+};
+
+/**
+ * Hide the picker's skin tone control.
+ *
+ * There is no supported way to do this: emoji-picker-element exposes no
+ * ::part() and no attribute or property for it, so this reaches into its
+ * shadow root and matches internal selectors. Both the class names and the
+ * ids are targeted, since either could be renamed independently upstream.
+ *
+ * If upstream renames all four this silently stops hiding anything, which is
+ * why it is only cosmetic: setPreferredSkinTone( 0 ) in getOrCreatePicker(),
+ * and the server-side check behind the REST endpoint, are what enforce the
+ * setting.
+ *
+ * @param {HTMLElement} thePicker The picker element.
+ */
+const hideSkinTonePicker = function ( thePicker ) {
+	if ( ! thePicker.shadowRoot ) {
+		return;
+	}
+
+	if ( thePicker.shadowRoot.getElementById( 'react-no-skintones' ) ) {
+		return;
+	}
+
+	const style = document.createElement( 'style' );
+	style.id = 'react-no-skintones';
+	style.textContent =
+		'.skintone-button-wrapper,.skintone-list,' +
+		'#skintone-button,#skintone-list{display:none!important}';
+
+	thePicker.shadowRoot.appendChild( style );
 };
 
 /**
@@ -132,6 +252,13 @@ const showReactionPicker = function ( el ) {
 	const thePicker = getOrCreatePicker();
 
 	thePicker.dataset.post = el.dataset.post;
+
+	// Applied per open rather than once at creation: the picker is a
+	// create-once singleton, so doing it here is what lets the setting take
+	// effect on a picker that already exists.
+	if ( ! skinTonesAllowed() ) {
+		hideSkinTonePicker( thePicker );
+	}
 
 	// Below 768px, static/react.css switches the picker to a fixed
 	// bottom sheet (position: fixed; left: 0; bottom: 0). Leave that
@@ -199,6 +326,131 @@ const findReactionsContainer = function ( post ) {
 };
 
 /**
+ * Whether a reaction bubble should stay on the page at a count of zero.
+ *
+ * The always-visible list is resolved server-side and covers both the
+ * configured default emoji and any custom icons, so both keep their bubble
+ * when their last reaction is removed. Anything else is taken away again.
+ *
+ * @param {string} emoji The reaction value.
+ * @return {boolean} Whether to keep the bubble at zero.
+ */
+const isAlwaysVisible = function ( emoji ) {
+	const always = settings.always_visible || [];
+
+	return always.indexOf( emoji ) !== -1;
+};
+
+/**
+ * Turn sanitized icon SVG markup into a live DOM node.
+ *
+ * Parsed as 'text/html', not 'image/svg+xml', for two reasons that both come
+ * out of core's icon sanitizer: it lowercases attribute names, so `viewBox`
+ * arrives as `viewbox`, and it does not guarantee an `xmlns`. The XML parser
+ * is case-sensitive and would leave the icon with no usable viewBox, and with
+ * no xmlns it yields a null namespaceURI that renders nothing at all. The HTML
+ * parser's foreign-attribute adjustment restores the real `viewBox` and puts
+ * the subtree in the SVG namespace either way.
+ *
+ * The markup has already been through core's svg/path/polygon allowlist on the
+ * server and DOMParser does not execute script, so this is not an injection
+ * surface -- but it is deliberately never assigned to innerHTML.
+ *
+ * @param {string} markup Sanitized SVG markup.
+ * @return {Node|null} The imported <svg> node, or null if it can't be parsed.
+ */
+const parseIconSvg = function ( markup ) {
+	if ( ! markup || 'function' !== typeof window.DOMParser ) {
+		return null;
+	}
+
+	let svg = null;
+
+	try {
+		const doc = new window.DOMParser().parseFromString(
+			'<body>' + markup,
+			'text/html'
+		);
+
+		svg = doc.body && doc.body.querySelector( 'svg' );
+	} catch {
+		return null;
+	}
+
+	if ( ! svg || 'http://www.w3.org/2000/svg' !== svg.namespaceURI ) {
+		return null;
+	}
+
+	return document.importNode( svg, true );
+};
+
+/**
+ * Build a reaction bubble.
+ *
+ * @param {string} post  The post ID.
+ * @param {string} emoji The reaction value.
+ * @return {HTMLElement|null} The bubble, or null if it can't be rendered.
+ */
+const createReactionBubble = function ( post, emoji ) {
+	const icon = ( settings.icons || {} )[ emoji ];
+
+	const emojiEl = document.createElement( 'div' );
+	emojiEl.className = 'emoji';
+
+	let className = 'emoji-reaction';
+
+	if ( icon ) {
+		const svg = parseIconSvg( icon.svg );
+
+		if ( ! svg ) {
+			return null;
+		}
+
+		className += ' emoji-reaction-icon';
+		emojiEl.appendChild( svg );
+	} else if ( 0 === emoji.indexOf( ICON_PREFIX ) ) {
+		// An icon reaction whose icon is no longer registered. Showing
+		// nothing beats showing the raw token.
+		return null;
+	} else {
+		emojiEl.textContent = emoji;
+	}
+
+	const bubble = document.createElement( 'div' );
+	bubble.className = className;
+	bubble.dataset.emoji = emoji;
+	bubble.dataset.post = post;
+	bubble.appendChild( emojiEl );
+
+	const countEl = document.createElement( 'div' );
+	countEl.className = 'count';
+	bubble.appendChild( countEl );
+
+	return bubble;
+};
+
+/**
+ * Apply a reaction count to a bubble.
+ *
+ * The .count element is always present, even at zero. Hiding it with a class
+ * rather than leaving it out keeps every caller -- and the stylesheet -- from
+ * having to cope with a missing node.
+ *
+ * @param {HTMLElement} bubble The bubble.
+ * @param {number}      count  The reaction count.
+ */
+const applyReactionCount = function ( bubble, count ) {
+	bubble.dataset.count = count;
+	bubble.getElementsByClassName( 'count' )[ 0 ].textContent = count;
+
+	if ( 0 === Number( count ) ) {
+		bubble.classList.add( 'is-zero' );
+	} else {
+		bubble.classList.remove( 'is-zero' );
+	}
+};
+
+/**
  * Update the visible reaction bubbles for a post from a fresh summary,
  * so a reaction appears immediately rather than only on the next page
  * load.
@@ -215,38 +467,48 @@ const updateReactionDisplay = function ( post, summary ) {
 	const addButton =
 		container.getElementsByClassName( 'emoji-reaction-add' )[ 0 ] || null;
 
+	const counts = {};
 	for ( let ii = 0; ii < summary.length; ii++ ) {
-		const group = summary[ ii ];
-		const bubbles = container.getElementsByClassName( 'emoji-reaction' );
-		let bubble = null;
+		counts[ summary[ ii ].emoji ] = summary[ ii ].count;
+	}
 
-		for ( let jj = 0; jj < bubbles.length; jj++ ) {
-			if ( bubbles[ jj ].dataset.emoji === group.emoji ) {
-				bubble = bubbles[ jj ];
-				break;
-			}
+	// Reconcile every bubble already on the page, including any the summary
+	// no longer mentions -- a reaction that was just toggled back off drops
+	// out of the summary entirely, and would otherwise keep a stale count.
+	// The live HTMLCollection is snapshotted first, because removing from it
+	// while iterating would skip entries.
+	const existing = Array.prototype.slice.call(
+		container.getElementsByClassName( 'emoji-reaction' )
+	);
+
+	for ( let ii = 0; ii < existing.length; ii++ ) {
+		const bubble = existing[ ii ];
+		const emoji = bubble.dataset.emoji;
+		const count = counts[ emoji ] || 0;
+
+		if ( 0 === count && ! isAlwaysVisible( emoji ) ) {
+			bubble.parentElement.removeChild( bubble );
+		} else {
+			applyReactionCount( bubble, count );
 		}
+
+		delete counts[ emoji ];
+	}
+
+	// Whatever is left in the summary is new, and needs a bubble.
+	for ( const emoji in counts ) {
+		if ( ! Object.prototype.hasOwnProperty.call( counts, emoji ) ) {
+			continue;
+		}
+
+		const bubble = createReactionBubble( post, emoji );
 
 		if ( ! bubble ) {
-			bubble = document.createElement( 'div' );
-			bubble.className = 'emoji-reaction';
-			bubble.dataset.emoji = group.emoji;
-			bubble.dataset.post = post;
-
-			const emojiEl = document.createElement( 'div' );
-			emojiEl.className = 'emoji';
-			emojiEl.textContent = group.emoji;
-			bubble.appendChild( emojiEl );
-
-			const countEl = document.createElement( 'div' );
-			countEl.className = 'count';
-			bubble.appendChild( countEl );
-
-			container.insertBefore( bubble, addButton );
+			continue;
 		}
 
-		bubble.dataset.count = group.count;
-		bubble.getElementsByClassName( 'count' )[ 0 ].textContent = group.count;
+		applyReactionCount( bubble, counts[ emoji ] );
+		container.insertBefore( bubble, addButton );
 	}
 };
 

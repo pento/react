@@ -143,6 +143,14 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	 * @return WP_Error|boolean
 	 */
 	public function create_item_permissions_check( $request ) {
+		if ( React_Settings::get( 'react_require_login' ) && ! is_user_logged_in() ) {
+			return new WP_Error(
+				'rest_reaction_login_required',
+				__( 'Sorry, you must be logged in to react.', 'react' ),
+				array( 'status' => rest_authorization_required_code() )
+			);
+		}
+
 		$post = ! empty( $request['post'] ) ? get_post( (int) $request['post'] ) : null;
 
 		if ( $post ) {
@@ -185,6 +193,20 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 			do_action( 'react_reaction_removed', $existing_id, $post_id, $emoji );
 
 			return $this->get_items( $request );
+		}
+
+		/*
+		 * Only new reactions are held to the current settings. Removing one is
+		 * checked above and always allowed, so turning off the picker or skin
+		 * tones, or retiring an icon, never strands a reaction somebody has
+		 * already left.
+		 */
+		if ( ! React_Settings::is_offerable_reaction( $emoji ) ) {
+			return new WP_Error(
+				'rest_reaction_not_offered',
+				__( 'Sorry, that reaction is not available on this site.', 'react' ),
+				array( 'status' => 403 )
+			);
 		}
 
 		$comment = array(
@@ -415,9 +437,15 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	}
 
 	/**
-	 * Validate that a submitted emoji is one of the reactions the picker
-	 * actually offers, rather than accepting arbitrary attacker-controlled
-	 * strings straight into a public comment.
+	 * Validate that a submitted reaction is one this site could legitimately
+	 * have stored, rather than accepting arbitrary attacker-controlled strings
+	 * straight into a public comment.
+	 *
+	 * Note that this is the wider of the plugin's two questions, and is
+	 * deliberately independent of the reaction settings. A request that gets
+	 * this far may still be refused by the offerability check in
+	 * create_item(); what matters here is that turning a setting off never
+	 * makes an already-stored reaction impossible to remove.
 	 *
 	 * @param mixed           $value   Value of the 'emoji' parameter.
 	 * @param WP_REST_Request $request The request object.
@@ -430,7 +458,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 			return $valid;
 		}
 
-		if ( ! isset( self::get_allowed_emoji()[ $value ] ) ) {
+		if ( ! React_Settings::is_known_reaction( $value ) ) {
 			return new WP_Error(
 				'rest_invalid_emoji',
 				__( 'Sorry, that is not a recognized reaction emoji.', 'react' ),
@@ -468,8 +496,7 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	}
 
 	/**
-	 * Build the set of emoji the reaction picker offers, keyed by the emoji
-	 * character itself for constant-time lookups.
+	 * Load the emoji dataset, split into base emoji and skin-tone variants.
 	 *
 	 * Reads from the same self-hosted dataset (static/emoji-data.json,
 	 * copied from the emoji-picker-element-data npm package by
@@ -477,20 +504,33 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	 * only emoji actually surfaced in the UI can ever be accepted from the
 	 * API.
 	 *
-	 * @return array<string, true> Map of emoji character => true.
+	 * Memoising this is safe precisely because the dataset is immutable --
+	 * it's a file on disk, not a setting. Do not extend this cache to hold
+	 * anything derived from an option: it would freeze at whatever the first
+	 * call in the process saw, which is wrong for the front end after a
+	 * settings change and wrong between tests in the PHPUnit suite.
+	 *
+	 * @return array {
+	 *     @type array<string, true> $base  Map of base emoji => true.
+	 *     @type array<string, true> $skins Map of skin-tone variant => true.
+	 * }
 	 */
-	private static function get_allowed_emoji() {
-		static $allowed = null;
+	private static function get_emoji_dataset() {
+		static $dataset = null;
 
-		if ( null !== $allowed ) {
-			return $allowed;
+		if ( null !== $dataset ) {
+			return $dataset;
 		}
 
-		$allowed = array();
-		$path    = dirname( __DIR__ ) . '/static/emoji-data.json';
+		$dataset = array(
+			'base'  => array(),
+			'skins' => array(),
+		);
+
+		$path = dirname( __DIR__ ) . '/static/emoji-data.json';
 
 		if ( ! is_readable( $path ) ) {
-			return $allowed;
+			return $dataset;
 		}
 
 		$contents = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local file, not a remote request.
@@ -498,16 +538,67 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 
 		foreach ( (array) $data as $entry ) {
 			if ( ! empty( $entry['emoji'] ) ) {
-				$allowed[ $entry['emoji'] ] = true;
+				$dataset['base'][ $entry['emoji'] ] = true;
 			}
 
 			foreach ( (array) ( $entry['skins'] ?? array() ) as $skin ) {
 				if ( ! empty( $skin['emoji'] ) ) {
-					$allowed[ $skin['emoji'] ] = true;
+					$dataset['skins'][ $skin['emoji'] ] = true;
 				}
 			}
 		}
 
-		return $allowed;
+		return $dataset;
+	}
+
+	/**
+	 * Whether a string is an emoji present in the dataset, in any skin tone.
+	 *
+	 * @param string $value Candidate emoji.
+	 * @return bool
+	 */
+	public static function is_known_emoji( $value ) {
+		if ( ! is_string( $value ) || '' === $value ) {
+			return false;
+		}
+
+		$dataset = self::get_emoji_dataset();
+
+		return isset( $dataset['base'][ $value ] ) || isset( $dataset['skins'][ $value ] );
+	}
+
+	/**
+	 * Whether an emoji carries a skin-tone modifier.
+	 *
+	 * Checked against the dataset's own skin lists rather than by scanning for
+	 * U+1F3FB-U+1F3FF, so the handful of emoji that *are* bare skin-tone
+	 * modifiers -- the dataset's "component" group, which the picker never
+	 * displays -- are treated as toned too.
+	 *
+	 * @param string $value Candidate emoji.
+	 * @return bool
+	 */
+	public static function has_skin_tone( $value ) {
+		if ( ! is_string( $value ) || '' === $value ) {
+			return false;
+		}
+
+		$dataset = self::get_emoji_dataset();
+
+		if ( isset( $dataset['skins'][ $value ] ) ) {
+			return true;
+		}
+
+		return 1 === preg_match( '/[\x{1F3FB}-\x{1F3FF}]/u', $value );
+	}
+
+	/**
+	 * Inverse of self::has_skin_tone(), for use as an array_filter() callback.
+	 *
+	 * @param string $value Candidate emoji.
+	 * @return bool
+	 */
+	public static function has_no_skin_tone( $value ) {
+		return ! self::has_skin_tone( $value );
 	}
 }
