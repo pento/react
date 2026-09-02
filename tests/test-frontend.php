@@ -309,4 +309,221 @@ class React_Test_Frontend extends WP_UnitTestCase {
 
 		$this->assertEquals( 0, $react->get_reaction_count( $post_id ) );
 	}
+
+	/**
+	 * The configured default reactions render even before anyone has reacted.
+	 */
+	public function test_default_reactions_render_at_zero() {
+		update_option( 'react_default_emoji', array( '😀', '🎉' ) );
+
+		$post_id = $this->factory->post->create();
+		$this->go_to( get_permalink( $post_id ) );
+
+		ob_start();
+		the_content();
+		$content = ob_get_clean();
+
+		$this->assertStringContainsString( "data-emoji='😀' data-count='0'", $content );
+		$this->assertStringContainsString( "data-emoji='🎉' data-count='0'", $content );
+		$this->assertStringContainsString( 'is-zero', $content );
+	}
+
+	/**
+	 * The count element is always present, even at zero -- the front-end JS
+	 * writes straight into it, so omitting it would throw on the first
+	 * reaction.
+	 */
+	public function test_zero_count_bubbles_still_have_a_count_element() {
+		update_option( 'react_default_emoji', array( '😀' ) );
+
+		$post_id = $this->factory->post->create();
+		$this->go_to( get_permalink( $post_id ) );
+
+		ob_start();
+		the_content();
+		$content = ob_get_clean();
+
+		$this->assertEquals( 1, preg_match( "/class='emoji-reaction is-zero'>.*?<div class='count'>0<\/div>/", $content ) );
+	}
+
+	/**
+	 * Defaults keep their configured order, and anything else follows behind.
+	 */
+	public function test_default_reactions_keep_their_configured_order() {
+		update_option( 'react_default_emoji', array( '😀', '🎉' ) );
+
+		$post_id = $this->factory->post->create();
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_content'  => '👏',
+				'comment_approved' => 1,
+			)
+		);
+
+		$this->go_to( get_permalink( $post_id ) );
+
+		ob_start();
+		the_content();
+		$content = ob_get_clean();
+
+		$this->assertLessThan( strpos( $content, '🎉' ), strpos( $content, '😀' ) );
+		$this->assertLessThan( strpos( $content, '👏' ), strpos( $content, '🎉' ) );
+	}
+
+	/**
+	 * A real tally should beat the zero seed rather than being overwritten by it.
+	 */
+	public function test_a_reacted_default_shows_its_real_count() {
+		update_option( 'react_default_emoji', array( '😀' ) );
+
+		$post_id = $this->factory->post->create();
+		$this->factory->comment->create_many(
+			3,
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_content'  => '😀',
+				'comment_approved' => 1,
+			)
+		);
+
+		$this->go_to( get_permalink( $post_id ) );
+
+		ob_start();
+		the_content();
+		$content = ob_get_clean();
+
+		$this->assertStringContainsString( "data-emoji='😀' data-count='3'", $content );
+		$this->assertStringNotContainsString( 'is-zero', $content );
+	}
+
+	/**
+	 * With the picker off there's nothing to open, so the button shouldn't render.
+	 */
+	public function test_add_button_is_hidden_when_the_picker_is_disabled() {
+		update_option( 'react_enable_picker', '0' );
+
+		$post_id = $this->factory->post->create();
+		$this->go_to( get_permalink( $post_id ) );
+
+		ob_start();
+		the_content();
+		$content = ob_get_clean();
+
+		$this->assertStringNotContainsString( 'emoji-reaction-add', $content );
+	}
+
+	/**
+	 * A logged-out visitor on a login-gated site keeps the counts but gets a
+	 * link to log in.
+	 */
+	public function test_login_gate_renders_links_for_logged_out_visitors() {
+		update_option( 'react_require_login', '1' );
+		update_option( 'react_default_emoji', array( '😀' ) );
+		wp_set_current_user( 0 );
+
+		$post_id = $this->factory->post->create();
+		$this->go_to( get_permalink( $post_id ) );
+
+		ob_start();
+		the_content();
+		$content = ob_get_clean();
+
+		$this->assertStringContainsString( 'emoji-reaction-login', $content );
+		$this->assertStringContainsString( 'wp-login.php', $content );
+		$this->assertStringContainsString( "data-emoji='😀'", $content );
+	}
+
+	/**
+	 * A logged-in visitor sees the normal buttons even with the gate on.
+	 */
+	public function test_login_gate_does_not_apply_to_logged_in_users() {
+		update_option( 'react_require_login', '1' );
+		wp_set_current_user( $this->factory->user->create() );
+
+		$post_id = $this->factory->post->create();
+		$this->go_to( get_permalink( $post_id ) );
+
+		ob_start();
+		the_content();
+		$content = ob_get_clean();
+
+		$this->assertStringNotContainsString( 'emoji-reaction-login', $content );
+		$this->assertStringContainsString( 'emoji-reaction-add', $content );
+	}
+
+	/**
+	 * A custom icon reaction renders as the registered SVG.
+	 */
+	public function test_custom_icon_reaction_renders_as_svg() {
+		$svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M1 21h4V9H1v12z"/></svg>';
+
+		update_option(
+			'react_custom_icons',
+			array(
+				'frontend-icon' => array(
+					'label'   => 'Frontend Icon',
+					'content' => React_Settings::sanitize_svg( $svg ),
+					'retired' => false,
+				),
+			),
+			false
+		);
+		React_Settings::register_icons();
+
+		$post_id = $this->factory->post->create();
+		$this->go_to( get_permalink( $post_id ) );
+
+		ob_start();
+		the_content();
+		$content = ob_get_clean();
+
+		$this->assertStringContainsString( 'emoji-reaction-icon', $content );
+		$this->assertStringContainsString( '<svg', $content );
+		$this->assertStringContainsString( '<path', $content );
+	}
+
+	/**
+	 * A reaction whose icon is no longer registered should be skipped rather
+	 * than rendering an empty bubble with a live count.
+	 */
+	public function test_reaction_for_an_unregistered_icon_is_skipped() {
+		$post_id = $this->factory->post->create();
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_content'  => 'icon:react-custom/long-gone',
+				'comment_approved' => 1,
+			)
+		);
+
+		$this->go_to( get_permalink( $post_id ) );
+
+		ob_start();
+		the_content();
+		$content = ob_get_clean();
+
+		$this->assertStringNotContainsString( 'long-gone', $content );
+	}
+
+	/**
+	 * The new settings reach the browser.
+	 */
+	public function test_settings_are_passed_to_the_script() {
+		$this->expect_footer_deprecation();
+
+		$post_id = $this->factory->post->create();
+		$this->go_to( get_permalink( $post_id ) );
+
+		ob_start();
+		wp_footer();
+		$footer = ob_get_clean();
+
+		$this->assertEquals( 1, preg_match( '/"enable_picker":true/', $footer ) );
+		$this->assertEquals( 1, preg_match( '/"allow_skin_tones":true/', $footer ) );
+		$this->assertEquals( 1, preg_match( '/"always_visible":\[/', $footer ) );
+	}
 }

@@ -27,6 +27,60 @@
 	background-color: #eee;
 }
 
+/*
+ * Configured default reactions and custom icons stay on the page at a count
+ * of zero, so there's something to click before anyone has reacted. The
+ * count element itself is always rendered -- hidden with visibility rather
+ * than display so the bubble keeps its height and doesn't jump the first
+ * time somebody reacts.
+ */
+.emoji-reaction.is-zero .count {
+	visibility: hidden;
+}
+
+.emoji-reaction.is-zero {
+	opacity: 0.6;
+}
+
+.emoji-reaction.is-zero:hover {
+	opacity: 1;
+}
+
+/*
+ * Custom icon reactions. Core's icon sanitizer strips `fill` from the <svg>
+ * root, so an icon authored with fill="currentColor" arrives with no fill at
+ * all and has to be coloured here. The explicit width also has to override
+ * the `.emoji-reaction * { width: 100% }` rule above.
+ */
+.emoji-reaction-icon .emoji {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 24px;
+}
+
+.emoji-reaction-icon .emoji svg {
+	width: 24px;
+	height: 24px;
+	fill: currentcolor;
+}
+
+/*
+ * On a login-gated site the bubbles are real links to wp-login.php. Undo the
+ * theme's link styling so they still read as bubbles.
+ */
+a.emoji-reaction,
+a.emoji-reaction-add {
+	display: block;
+	color: inherit;
+	text-decoration: none;
+}
+
+a.emoji-reaction:hover,
+a.emoji-reaction-add:hover {
+	text-decoration: none;
+}
+
 emoji-picker {
 	position: absolute;
 

@@ -3,6 +3,8 @@
  * Plugin Name: React
  * Description: 💩 Reactions.
  * Version: 0.1
+ * Requires at least: 4.7
+ * Requires PHP: 7.0
  * Text Domain: react
  *
  * @package react
@@ -20,6 +22,17 @@ function react_load() {
 	require_once __DIR__ . '/lib/class-wp-rest-react-controller.php';
 
 	require_once __DIR__ . '/lib/class-react.php';
+
+	require_once __DIR__ . '/lib/class-react-settings.php';
+
+	/*
+	 * Hooked from here rather than from React::__construct(), which itself
+	 * runs on `init`: adding an `init` callback from inside one at the same
+	 * priority is silently dropped, because WP_Hook iterates a copy of its
+	 * callback array. The settings also need to be reachable in wp-admin,
+	 * which React::__construct() returns early from.
+	 */
+	React_Settings::bootstrap();
 
 	add_action( 'init', array( 'React', 'init' ) );
 }

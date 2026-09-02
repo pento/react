@@ -186,4 +186,187 @@ class WP_Test_REST_Reactions_Controller extends WP_Test_REST_Controller_Testcase
 		$schema     = $controller->get_item_schema();
 		$this->assertIsArray( $schema );
 	}
+
+	public function test_create_item_rejects_logged_out_when_login_is_required() {
+		update_option( 'react_require_login', '1' );
+
+		$post_id = $this->factory->post->create();
+		wp_set_current_user( 0 );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/react' );
+		$request->set_param( 'post', $post_id );
+		$request->set_param( 'emoji', '😀' );
+		$response = $this->server->dispatch( $request );
+
+		$this->assertEquals( 401, $response->get_status() );
+		$this->assertEquals( 'rest_reaction_login_required', $response->get_data()['code'] );
+
+		$comments = get_comments(
+			array(
+				'post_id' => $post_id,
+				'type'    => 'reaction',
+			)
+		);
+		$this->assertCount( 0, $comments );
+	}
+
+	public function test_create_item_allows_logged_in_when_login_is_required() {
+		update_option( 'react_require_login', '1' );
+
+		$post_id = $this->factory->post->create();
+		wp_set_current_user( $this->factory->user->create( array( 'role' => 'administrator' ) ) );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/react' );
+		$request->set_param( 'post', $post_id );
+		$request->set_param( 'emoji', '😀' );
+		$response = $this->server->dispatch( $request );
+
+		$this->assertEquals( 200, $response->get_status() );
+	}
+
+	public function test_create_item_rejects_an_emoji_outside_the_default_set_when_the_picker_is_off() {
+		update_option( 'react_enable_picker', '0' );
+		update_option( 'react_default_emoji', array( '😀' ) );
+
+		$post_id = $this->factory->post->create();
+		wp_set_current_user( $this->factory->user->create( array( 'role' => 'administrator' ) ) );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/react' );
+		$request->set_param( 'post', $post_id );
+		$request->set_param( 'emoji', '🎉' );
+		$response = $this->server->dispatch( $request );
+
+		$this->assertEquals( 403, $response->get_status() );
+		$this->assertEquals( 'rest_reaction_not_offered', $response->get_data()['code'] );
+	}
+
+	public function test_create_item_allows_the_default_set_when_the_picker_is_off() {
+		update_option( 'react_enable_picker', '0' );
+		update_option( 'react_default_emoji', array( '😀' ) );
+
+		$post_id = $this->factory->post->create();
+		wp_set_current_user( $this->factory->user->create( array( 'role' => 'administrator' ) ) );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/react' );
+		$request->set_param( 'post', $post_id );
+		$request->set_param( 'emoji', '😀' );
+		$response = $this->server->dispatch( $request );
+
+		$this->assertEquals( 200, $response->get_status() );
+	}
+
+	public function test_create_item_rejects_a_skin_tone_when_they_are_disallowed() {
+		update_option( 'react_allow_skin_tones', '0' );
+
+		$post_id = $this->factory->post->create();
+		wp_set_current_user( $this->factory->user->create( array( 'role' => 'administrator' ) ) );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/react' );
+		$request->set_param( 'post', $post_id );
+		$request->set_param( 'emoji', '👋🏽' );
+		$response = $this->server->dispatch( $request );
+
+		$this->assertEquals( 403, $response->get_status() );
+		$this->assertEquals( 'rest_reaction_not_offered', $response->get_data()['code'] );
+	}
+
+	/**
+	 * Turning a setting off must never strand a reaction somebody already
+	 * left. Removal goes through the same route as creation, so if the
+	 * settings check were applied to both, this reaction could be seen but
+	 * never un-reacted.
+	 */
+	public function test_an_existing_skin_toned_reaction_can_still_be_removed_after_tones_are_disallowed() {
+		$post_id = $this->factory->post->create();
+		$user_id = $this->factory->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user_id );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/react' );
+		$request->set_param( 'post', $post_id );
+		$request->set_param( 'emoji', '👋🏽' );
+		$this->assertEquals( 200, $this->server->dispatch( $request )->get_status() );
+
+		update_option( 'react_allow_skin_tones', '0' );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/react' );
+		$request->set_param( 'post', $post_id );
+		$request->set_param( 'emoji', '👋🏽' );
+		$response = $this->server->dispatch( $request );
+
+		$this->assertEquals( 200, $response->get_status() );
+
+		$comments = get_comments(
+			array(
+				'post_id' => $post_id,
+				'type'    => 'reaction',
+			)
+		);
+		$this->assertCount( 0, $comments );
+	}
+
+	/**
+	 * The same guarantee, for a reaction using an icon that has since been
+	 * retired.
+	 */
+	public function test_a_retired_icon_reaction_can_still_be_removed() {
+		$svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M1 21h4V9H1v12z"/></svg>';
+
+		$icon = array(
+			'label'   => 'Removable',
+			'content' => React_Settings::sanitize_svg( $svg ),
+			'retired' => false,
+		);
+
+		update_option( 'react_custom_icons', array( 'removable-icon' => $icon ), false );
+		React_Settings::register_icons();
+
+		$token   = React_Settings::icon_token( 'removable-icon' );
+		$post_id = $this->factory->post->create();
+		wp_set_current_user( $this->factory->user->create( array( 'role' => 'administrator' ) ) );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/react' );
+		$request->set_param( 'post', $post_id );
+		$request->set_param( 'emoji', $token );
+		$this->assertEquals( 200, $this->server->dispatch( $request )->get_status() );
+
+		$icon['retired'] = true;
+		update_option( 'react_custom_icons', array( 'removable-icon' => $icon ), false );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/react' );
+		$request->set_param( 'post', $post_id );
+		$request->set_param( 'emoji', $token );
+
+		$this->assertEquals( 200, $this->server->dispatch( $request )->get_status() );
+
+		$comments = get_comments(
+			array(
+				'post_id' => $post_id,
+				'type'    => 'reaction',
+			)
+		);
+		$this->assertCount( 0, $comments );
+	}
+
+	public function test_create_item_rejects_an_unregistered_icon_token() {
+		$post_id = $this->factory->post->create();
+		wp_set_current_user( $this->factory->user->create( array( 'role' => 'administrator' ) ) );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/react' );
+		$request->set_param( 'post', $post_id );
+		$request->set_param( 'emoji', 'icon:react-custom/nope' );
+		$response = $this->server->dispatch( $request );
+
+		// The REST framework wraps a validate_callback error, so the
+		// specific code is nested rather than top-level.
+		$this->assertEquals( 400, $response->get_status() );
+		$this->assertEquals( 'rest_invalid_param', $response->get_data()['code'] );
+
+		$comments = get_comments(
+			array(
+				'post_id' => $post_id,
+				'type'    => 'reaction',
+			)
+		);
+		$this->assertCount( 0, $comments );
+	}
 }
