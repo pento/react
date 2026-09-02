@@ -21,7 +21,9 @@ A small WordPress plugin (`react.php`) that lets visitors react to posts with an
 - `tools/copy-emoji-data.js` — copies the emoji dataset into `static/` at build time (see above).
 - `tools/seed-playground-data.php` — seeds demo content for the WordPress Playground blueprint; not part of the plugin runtime.
 - `tests/` — PHPUnit tests using `WP_UnitTestCase`. `tests/class-wp-test-*` are copies of WP core's own REST API test helpers (excluded from WPCS as vendored code).
-- `blueprint.json` — WordPress Playground blueprint; the README's "Try it now" badge points at this.
+- `blueprint.json` — WordPress Playground blueprint; the README's "Try it now" badge points at this. Note that its `installPlugin` step pins `ref: master`, so linking to the raw file on a branch still installs master — to demo a branch, build an inline blueprint in the Playground URL fragment with `ref` set to that branch.
+- `readme.txt` — the **WordPress.org** readme: user-facing description, FAQ, and the changelog, plus the `Requires at least` / `Tested up to` / `Requires PHP` headers WP.org reads. Validate changes with the `wporg-plugins` readme validator before committing.
+- `README.md` — the **GitHub** readme: badges, the REST route, requirements, the hooks table, and pointers to this file. The two are deliberately separate rather than one hybrid file; the changelog lives only in `readme.txt` so they can't drift.
 
 ## Building / installing dependencies
 
@@ -69,6 +71,21 @@ All of `composer lint:php`, `vendor/bin/phpunit`, `npm run lint`, and `npm run t
 - Test methods in `tests/` don't require individual doc comments (see the `phpcs.xml` override) — their names are expected to be self-documenting.
 - JS targets evergreen browsers only -- there's no legacy-IE fallback path to preserve (dropped when the plugin adopted `emoji-picker-element`, which itself doesn't support older browsers).
 - Reactions are just comments under the hood; anything that changes how they're queried/counted should consider all the places WordPress surfaces comments by default (the theme's comment list, comment feeds, widgets like Recent Comments), not just the most visible one.
+
+### Version requirements
+
+The floors are `Requires at least: 4.7` / `Requires PHP: 7.0`, declared in both `readme.txt`
+and the `react.php` plugin header (the header is what WordPress itself enforces, so keep the two
+in step). They come from:
+
+- **WP 4.7** — `WP_REST_Controller`, `register_setting()`'s `$args` array form,
+  `rest_authorization_required_code()`, `rest_validate_request_arg()`.
+- **PHP 7.0** — a single null coalescing operator in `WP_REST_React_Controller`.
+
+The Icon Registration API needs WP 7.1 and is `function_exists()`-gated, so it must never become
+load-bearing for anything outside custom icons. Note the CI matrix only covers PHP 8.1-8.3, so
+the 7.0 floor is a property of the syntax rather than something that gets exercised — if you
+rely on it, extend the matrix.
 
 ### Reaction settings
 

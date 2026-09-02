@@ -3,6 +3,8 @@
  * Plugin Name: React
  * Description: 💩 Reactions.
  * Version: 0.1
+ * Requires at least: 4.7
+ * Requires PHP: 7.0
  * Text Domain: react
  *
  * @package react
