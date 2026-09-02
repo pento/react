@@ -19,14 +19,22 @@ if ( ! $existing ) {
 	);
 
 	if ( ! is_wp_error( $demo_post_id ) ) {
-		// Seed the post with some initial emoji reactions.
+		/*
+		 * Seed the post with some initial emoji reactions.
+		 *
+		 * These have to be the dataset's own fully-qualified forms, exactly as
+		 * they appear in static/emoji-data.json -- a bare U+2764 heart, for
+		 * instance, is not a dataset key, so the REST endpoint would refuse to
+		 * remove it and it would render as a second, un-clickable heart beside
+		 * the configured default.
+		 */
 		$initial_reactions = array(
 			'😀'  => 5,
 			'🌿'  => 3,
 			'🍔'  => 8,
 			'⚽️' => 2,
 			'💡'  => 4,
-			'❤'  => 12,
+			'❤️' => 12,
 		);
 
 		foreach ( $initial_reactions as $emoji => $count ) {
