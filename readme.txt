@@ -16,8 +16,8 @@ Adds an emoji reaction picker under each post's content.
 
 Reactions are stored as ordinary WordPress comments (with a `reaction` comment type), so they
 inherit your existing comment moderation. They're also automatically excluded from your theme's
-comment list, comment feeds, and things like the Recent Comments widget, so they never show up
-twice or inflate your comment count.
+comment list, comment feeds, things like the Recent Comments widget, and the Comments screen in
+wp-admin, so they never show up twice or inflate your comment count.
 
 Additional background is at https://make.wordpress.org/core/2016/03/07/reactions/.
 
@@ -52,6 +52,9 @@ already left -- those keep showing, and can still be removed.
 
 No. Reactions are stored as comments, but they're filtered out of your theme's comment list,
 comment feeds, and comment counts, so they only appear as reactions.
+
+They're kept out of Comments in wp-admin too. To find one -- say, to delete it -- choose
+"Reactions" from the comment type dropdown on that screen.
 
 = Can visitors react without logging in? =
 
@@ -89,6 +92,9 @@ Development happens at https://github.com/pento/react.
 
 = Unreleased =
 
+* Reactions no longer show up in wp-admin's Comments screen, the dashboard's Activity widget, or
+  the comment counts in the posts list. They can still be listed by choosing "Reactions" from
+  the Comments screen's comment type dropdown.
 * Added a **Reactions** section to Settings &gt; Discussion: configurable default reactions, an
   optional emoji picker, a skin tone toggle, an option to require visitors to be logged in, and
   custom SVG reaction icons registered via the WordPress 7.1 Icon Registration API. Every

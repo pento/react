@@ -13,8 +13,9 @@
 
 Adds an emoji reaction picker under each post's content. Reactions are stored as ordinary
 WordPress comments (`comment_type` = `reaction`), so they inherit existing comment moderation —
-and are automatically excluded from the theme's normal comment list, comment feeds, and things
-like the Recent Comments widget, so they don't show up twice.
+and are automatically excluded from the theme's normal comment list, comment feeds, things like
+the Recent Comments widget, and wp-admin's Comments screen, so they don't show up twice. The
+Comments screen's type dropdown gains a **Reactions** entry for finding them when you need to.
 
 Additional background at <https://make.wordpress.org/core/2016/03/07/reactions/>.
 
