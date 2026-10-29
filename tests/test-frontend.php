@@ -580,4 +580,99 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		$this->assertEquals( 1, preg_match( '/"allow_skin_tones":true/', $footer ) );
 		$this->assertEquals( 1, preg_match( '/"always_visible":\[/', $footer ) );
 	}
+
+	/**
+	 * Create a reaction comment on a post.
+	 *
+	 * @param int    $post_id  The post ID.
+	 * @param string $reaction The reaction value.
+	 * @param string $approved The comment_approved value.
+	 * @return int The comment ID.
+	 */
+	private function add_reaction( $post_id, $reaction, $approved = '1' ) {
+		return $this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_content'  => $reaction,
+				'comment_approved' => $approved,
+			)
+		);
+	}
+
+	public function test_reaction_summary_tallies_each_reaction() {
+		$react   = React::init();
+		$post_id = $this->factory->post->create();
+
+		$this->add_reaction( $post_id, '😀' );
+		$this->add_reaction( $post_id, '😀' );
+		$this->add_reaction( $post_id, '🎉' );
+
+		$summary = $react->get_reaction_summary( $post_id );
+
+		$this->assertSame( 2, $summary['😀'] );
+		$this->assertSame( 1, $summary['🎉'] );
+		$this->assertSame( 3, $react->get_reaction_count( $post_id ) );
+	}
+
+	public function test_reaction_summary_keeps_lookalike_reactions_apart() {
+		$react   = React::init();
+		$post_id = $this->factory->post->create();
+
+		// The default utf8mb4 collations treat each of these pairs as equal.
+		$this->add_reaction( $post_id, "\u{1F44D}" );
+		$this->add_reaction( $post_id, "\u{1F44D}\u{FE0F}" );
+		$this->add_reaction( $post_id, "\u{2764}" );
+		$this->add_reaction( $post_id, "\u{2764}\u{FE0F}" );
+		$this->add_reaction( $post_id, 'icon:react-custom/heart' );
+		$this->add_reaction( $post_id, 'icon:react-custom/Heart' );
+
+		$summary = $react->get_reaction_summary( $post_id );
+
+		$this->assertCount( 6, $summary );
+		$this->assertSame( array( 1 ), array_values( array_unique( $summary ) ) );
+	}
+
+	public function test_reaction_summary_excludes_spam_and_trash() {
+		$react   = React::init();
+		$post_id = $this->factory->post->create();
+
+		$this->add_reaction( $post_id, '😀' );
+		$this->add_reaction( $post_id, '😀', '0' );
+		$this->add_reaction( $post_id, '😀', 'spam' );
+		$this->add_reaction( $post_id, '😀', 'trash' );
+
+		$this->assertSame( array( '😀' => 2 ), $react->get_reaction_summary( $post_id ) );
+	}
+
+	public function test_reaction_summary_is_cached() {
+		$react   = React::init();
+		$post_id = $this->factory->post->create();
+		$this->add_reaction( $post_id, '😀' );
+
+		$react->get_reaction_summary( $post_id );
+
+		$queries_before = get_num_queries();
+		$react->get_reaction_summary( $post_id );
+		$react->get_reaction_count( $post_id );
+
+		$this->assertSame( $queries_before, get_num_queries() );
+	}
+
+	public function test_reaction_summary_cache_invalidated_on_edit() {
+		$react      = React::init();
+		$post_id    = $this->factory->post->create();
+		$comment_id = $this->add_reaction( $post_id, '😀' );
+
+		$this->assertSame( array( '😀' => 1 ), $react->get_reaction_summary( $post_id ) );
+
+		wp_update_comment(
+			array(
+				'comment_ID'      => $comment_id,
+				'comment_content' => '🎉',
+			)
+		);
+
+		$this->assertSame( array( '🎉' => 1 ), $react->get_reaction_summary( $post_id ) );
+	}
 }

@@ -70,14 +70,14 @@ Three things about how they're implemented are worth knowing before changing thi
 
 | Hook | Type | Fires |
 | --- | --- | --- |
-| `rest_reaction_query` | filter | Before querying reactions via the REST API — filters the `WP_Comment_Query` args. |
+| `rest_reaction_query` | filter | Before querying reactions via the REST API — filters the `WP_Comment_Query` args. Left unchanged, the response comes from each post's cached tallies; changing the args runs that query instead. |
 | `rest_prepare_reaction` | filter | After a reaction group is prepared for a REST response. |
 | `react_reaction_created` | action | After a new reaction comment is inserted. |
 | `react_reaction_removed` | action | After a reaction comment is removed by toggling it off. |
-| `react_reaction_count_invalidated` | action | After a post's cached reaction count is invalidated (on insert, delete, or status change). |
+| `react_reaction_count_invalidated` | action | After a post's cached reaction tallies are invalidated (on insert, edit, delete, or status change). |
 | `react_reaction_markup` | filter | Filters the reactions widget's HTML before it's appended to the post content. |
-| `react_reaction_count_cache_group` | filter | Filters the cache group the per-post reaction count is stored under. |
-| `react_reaction_count_cache_ttl` | filter | Filters the cache TTL (in seconds) for the per-post reaction count. |
+| `react_reaction_count_cache_group` | filter | Filters the cache group each post's reaction tallies are stored under. |
+| `react_reaction_count_cache_ttl` | filter | Filters the cache TTL (in seconds) for each post's reaction tallies. |
 
 ## Development
 
