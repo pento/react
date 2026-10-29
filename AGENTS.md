@@ -91,9 +91,10 @@ rely on it, extend the matrix.
 
 ### Reaction settings
 
-Five invariants in this area are non-obvious enough that they tend to get "tidied" back into bugs:
+Six invariants in this area are non-obvious enough that they tend to get "tidied" back into bugs:
 
 - **`is_known_reaction()` and `is_offerable_reaction()` must stay separate.** Removing a reaction goes through the same `POST` route as adding one, so a single settings-dependent check would leave existing reactions visible but impossible to un-react after skin tones or the picker are turned off, or an icon is retired. `validate_emoji()` uses the permanent superset; the settings-dependent check happens only on the insert branch of `create_item()`.
+- **Reaction tallies are grouped on raw bytes (`CAST(comment_content AS BINARY)`).** `React::get_reaction_summary()` aggregates in SQL, and WordPress's default utf8mb4 collations treat 👍/👍️, ❤/❤️ and case-variant icon tokens as equal. Grouping on the collated column would silently merge them. `test_reaction_summary_keeps_lookalike_reactions_apart` guards this.
 - **Never memoize anything settings-derived in `WP_REST_React_Controller`.** The `static` cache in `get_emoji_dataset()` is safe only because the dataset is an immutable file on disk. Caching a composed allow-list would freeze at the first call in the process — wrong for the front end after a settings change, and wrong between tests.
 - **Boolean settings are stored as `'1'`/`'0'`, not `true`/`false`.** `get_option()` answers `false` for an option that has never been saved and `update_option()` returns early on an unchanged value, so storing boolean `false` for a default-on setting writes nothing and unticking the box looks like it didn't save.
 - **Emoji written in PHP must be the dataset's fully-qualified form.** Thumbs up is `U+1F44D U+FE0F` in `static/emoji-data.json` and a bare `U+1F44D` is not a key at all, so it gets dropped by the sanitizer. This applies to the defaults in `React_Settings::defaults()` and to `tools/seed-playground-data.php`.

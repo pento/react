@@ -369,4 +369,78 @@ class WP_Test_REST_Reactions_Controller extends WP_Test_REST_Controller_Testcase
 		);
 		$this->assertCount( 0, $comments );
 	}
+
+	public function test_get_items_returns_tallies_for_each_post() {
+		$first  = $this->factory->post->create();
+		$second = $this->factory->post->create();
+
+		foreach ( array( array( $first, '😀' ), array( $first, '😀' ), array( $second, '🎉' ) ) as $reaction ) {
+			$this->factory->comment->create(
+				array(
+					'comment_post_ID'  => $reaction[0],
+					'comment_type'     => 'reaction',
+					'comment_content'  => $reaction[1],
+					'comment_approved' => 1,
+				)
+			);
+		}
+
+		$request = new WP_REST_Request( 'GET', '/wp/v2/react' );
+		$request->set_param( 'post', array( $first, $second ) );
+		$response = $this->server->dispatch( $request );
+
+		$groups = array();
+		foreach ( $response->get_data() as $group ) {
+			$groups[ $group['post_id'] . ' ' . $group['emoji'] ] = $group['count'];
+		}
+
+		$this->assertSame(
+			array(
+				$first . ' 😀'  => 2,
+				$second . ' 🎉' => 1,
+			),
+			$groups
+		);
+		$headers = $response->get_headers();
+		$this->assertSame( 3, $headers['X-WP-Total'] );
+		$this->assertSame( 2, $headers['X-WP-TotalGroups'] );
+	}
+
+	public function test_get_items_honours_a_filtered_query() {
+		$post_id = $this->factory->post->create();
+		$user_id = $this->factory->user->create();
+
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_content'  => '😀',
+				'comment_approved' => 1,
+				'user_id'          => $user_id,
+			)
+		);
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_content'  => '😀',
+				'comment_approved' => 1,
+			)
+		);
+
+		$only_user = function ( $args ) use ( $user_id ) {
+			$args['user_id'] = $user_id;
+			return $args;
+		};
+		add_filter( 'rest_reaction_query', $only_user );
+
+		$request = new WP_REST_Request( 'GET', '/wp/v2/react' );
+		$request->set_param( 'post', array( $post_id ) );
+		$data = $this->server->dispatch( $request )->get_data();
+
+		remove_filter( 'rest_reaction_query', $only_user );
+
+		$this->assertCount( 1, $data );
+		$this->assertSame( 1, $data[0]['count'] );
+	}
 }

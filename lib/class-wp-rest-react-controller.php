@@ -84,13 +84,20 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	 * @return WP_Error|WP_REST_Response
 	 */
 	public function get_items( $request ) {
-		$prepared_args = array(
-			'post__in' => wp_parse_id_list( $request['post'] ),
+		$post_ids = wp_parse_id_list( $request['post'] );
+
+		$default_args  = array(
+			'post__in' => $post_ids,
 			'type'     => React::COMMENT_TYPE,
 		);
+		$prepared_args = $default_args;
 
 		/**
 		 * Filter arguments, before passing to WP_Comment_Query, when querying reactions via the REST API.
+		 *
+		 * Leaving the arguments unchanged lets the response be built from each
+		 * post's cached, SQL-aggregated tallies. Changing them falls back to
+		 * running this WP_Comment_Query and tallying its results instead.
 		 *
 		 * @see https://developer.wordpress.org/reference/classes/wp_comment_query/
 		 *
@@ -99,34 +106,32 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 		 */
 		$prepared_args = apply_filters( 'rest_reaction_query', $prepared_args, $request );
 
-		$query        = new WP_Comment_Query();
-		$query_result = $query->query( $prepared_args );
-
-		$reactions_count = array();
-		foreach ( $query_result as $reaction ) {
-			if ( empty( $reactions_count[ $reaction->comment_content ] ) ) {
-				$reactions_count[ $reaction->comment_content ] = array(
-					'count'   => 0,
-					'post_id' => $reaction->comment_post_ID,
-				);
+		if ( $post_ids && $prepared_args === $default_args ) {
+			$summaries = array();
+			foreach ( $post_ids as $post_id ) {
+				$summaries[ $post_id ] = React::init()->get_reaction_summary( $post_id );
 			}
-
-			++$reactions_count[ $reaction->comment_content ]['count'];
+		} else {
+			$summaries = $this->tally_reaction_query( $prepared_args );
 		}
 
-		$reactions = array();
-		foreach ( $reactions_count as $emoji => $data ) {
-			$reaction = array(
-				'emoji'   => $emoji,
-				'count'   => $data['count'],
-				'post_id' => $data['post_id'],
-			);
+		$reactions       = array();
+		$total_reactions = 0;
+		foreach ( $summaries as $post_id => $summary ) {
+			foreach ( $summary as $emoji => $count ) {
+				$reaction = array(
+					'emoji'   => (string) $emoji,
+					'count'   => $count,
+					'post_id' => $post_id,
+				);
 
-			$data        = $this->prepare_item_for_response( $reaction, $request );
-			$reactions[] = $this->prepare_response_for_collection( $data );
+				$data        = $this->prepare_item_for_response( $reaction, $request );
+				$reactions[] = $this->prepare_response_for_collection( $data );
+
+				$total_reactions += $count;
+			}
 		}
 
-		$total_reactions = (int) $query->found_comments;
 		$reaction_groups = count( $reactions );
 
 		$response = rest_ensure_response( $reactions );
@@ -243,6 +248,34 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 		}
 
 		return $this->get_items( $request );
+	}
+
+	/**
+	 * Tally reactions by running a WP_Comment_Query and counting its results.
+	 *
+	 * Only used when the rest_reaction_query filter has changed the query
+	 * arguments, since React::get_reaction_summary()'s aggregate query can't
+	 * honour arbitrary WP_Comment_Query arguments.
+	 *
+	 * @param  array $args WP_Comment_Query arguments.
+	 * @return array[] Reaction counts keyed by post ID, then by reaction.
+	 */
+	protected function tally_reaction_query( $args ) {
+		$query     = new WP_Comment_Query();
+		$summaries = array();
+
+		foreach ( (array) $query->query( $args ) as $reaction ) {
+			$post_id = (int) $reaction->comment_post_ID;
+			$emoji   = $reaction->comment_content;
+
+			if ( ! isset( $summaries[ $post_id ][ $emoji ] ) ) {
+				$summaries[ $post_id ][ $emoji ] = 0;
+			}
+
+			++$summaries[ $post_id ][ $emoji ];
+		}
+
+		return $summaries;
 	}
 
 	/**

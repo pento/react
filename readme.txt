@@ -92,6 +92,9 @@ Development happens at https://github.com/pento/react.
 
 = Unreleased =
 
+* Reaction tallies are now counted by the database and cached per post, instead of every
+  reaction on a post being loaded on each page view. Both the reactions under a post and the
+  REST endpoint use the same cached tallies.
 * Reactions no longer show up in wp-admin's Comments screen, the dashboard's Activity widget, or
   the comment counts in the posts list. They can still be listed by choosing "Reactions" from
   the Comments screen's comment type dropdown.

@@ -34,6 +34,7 @@ class React {
 		add_action( 'wp_insert_comment', array( $this, 'invalidate_reaction_count_cache' ), 10, 2 );
 		add_action( 'delete_comment', array( $this, 'invalidate_reaction_count_cache_on_delete' ), 10, 1 );
 		add_action( 'transition_comment_status', array( $this, 'invalidate_reaction_count_cache_on_status_change' ), 10, 3 );
+		add_action( 'edit_comment', array( $this, 'invalidate_reaction_count_cache_on_edit' ), 10, 1 );
 
 		// Registered before the is_admin() bail, so reactions stay out of
 		// wp-admin's Comments screen, the dashboard's Activity widget and the
@@ -134,21 +135,7 @@ class React {
 			return $content;
 		}
 
-		$reactions = get_comments(
-			array(
-				'post_id' => $post_id,
-				'type'    => self::COMMENT_TYPE,
-			)
-		);
-
-		$reactions_summary = array();
-		foreach ( $reactions as $reaction ) {
-			if ( ! isset( $reactions_summary[ $reaction->comment_content ] ) ) {
-				$reactions_summary[ $reaction->comment_content ] = 0;
-			}
-
-			++$reactions_summary[ $reaction->comment_content ];
-		}
+		$reactions_summary = $this->get_reaction_summary( $post_id );
 
 		/*
 		 * Seed the configured defaults at zero so they're always offered, then
@@ -297,56 +284,99 @@ class React {
 	}
 
 	/**
-	 * Get the number of reactions a post has, from cache where possible.
+	 * Get the number of reactions a post has.
 	 *
 	 * This runs on every call to get_comments_number(), which can mean once
-	 * per post on an archive page -- caching this avoids a COUNT query per
-	 * post per page load.
-	 * The cache is invalidated in invalidate_reaction_count_cache(),
-	 * invalidate_reaction_count_cache_on_delete(), and
-	 * invalidate_reaction_count_cache_on_status_change() whenever a reaction
-	 * comment is inserted, deleted, or changes status (e.g. trashed,
-	 * spammed, or un/approved), and otherwise expires after an hour as a
-	 * safety net against any invalidation path this doesn't cover.
+	 * per post on an archive page, so it's derived from the cached summary
+	 * rather than costing a COUNT query of its own.
 	 *
 	 * @param int $post_id The post ID.
 	 * @return int Number of reactions the post has.
 	 */
 	public function get_reaction_count( $post_id ) {
-		$post_id     = (int) $post_id;
-		$cache_group = $this->get_reaction_count_cache_group();
-		$cached      = wp_cache_get( $post_id, $cache_group );
+		return (int) array_sum( $this->get_reaction_summary( $post_id ) );
+	}
 
-		if ( false !== $cached ) {
-			return (int) $cached;
+	/**
+	 * Get a post's reaction tallies, from cache where possible.
+	 *
+	 * Both the_content() and the REST controller render from this, so it
+	 * runs on every view of a post that shows reactions. It's aggregated in
+	 * SQL rather than by fetching every reaction comment and counting them in
+	 * PHP, which on a popular post meant loading thousands of full rows per
+	 * page view.
+	 *
+	 * The cache is invalidated by invalidate_reaction_count_cache() and the
+	 * methods that call it, whenever a reaction comment is inserted, edited,
+	 * deleted, or changes status (e.g. trashed, spammed, or un/approved), and
+	 * otherwise expires after an hour as a safety net against any
+	 * invalidation path this doesn't cover.
+	 *
+	 * @param int $post_id The post ID.
+	 * @return int[] Reaction counts keyed by reaction (an emoji, or a custom
+	 *               icon reference), most recently used first.
+	 */
+	public function get_reaction_summary( $post_id ) {
+		$post_id     = (int) $post_id;
+		$cache_key   = 'summary-' . $post_id;
+		$cache_group = $this->get_reaction_count_cache_group();
+		$cached      = wp_cache_get( $cache_key, $cache_group );
+
+		if ( is_array( $cached ) ) {
+			return $cached;
 		}
 
-		$count = (int) get_comments(
-			array(
-				'post_id' => $post_id,
-				'type'    => self::COMMENT_TYPE,
-				'count'   => true,
+		global $wpdb;
+
+		/*
+		 * Grouped on the raw bytes, because WordPress's default utf8mb4
+		 * collations compare emoji loosely: they'd fold 👍 and 👍️ (with a
+		 * variation selector), ❤ and ❤️, and icon tokens differing only in case
+		 * into one group, where counting in PHP kept them apart. MIN() just
+		 * picks the value back out of a group whose members are identical.
+		 *
+		 * The status clause matches WP_Comment_Query's default of 'all', which
+		 * this used before: approved and pending, but not spam or trash.
+		 * Ordering by each reaction's newest use matches its default order too.
+		 */
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- WP_Comment_Query can't aggregate, and this is cached below.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT MIN(comment_content) AS reaction, COUNT(*) AS total
+				FROM {$wpdb->comments}
+				WHERE comment_post_ID = %d
+					AND comment_type = %s
+					AND comment_approved IN ( '0', '1' )
+				GROUP BY CAST(comment_content AS BINARY)
+				ORDER BY MAX(comment_date_gmt) DESC, MAX(comment_ID) DESC",
+				$post_id,
+				self::COMMENT_TYPE
 			)
 		);
 
+		$summary = array();
+		foreach ( (array) $rows as $row ) {
+			$summary[ $row->reaction ] = (int) $row->total;
+		}
+
 		/**
-		 * Filters the TTL, in seconds, of the cached per-post reaction count.
+		 * Filters the TTL, in seconds, of a post's cached reaction tallies.
 		 *
 		 * @param int $ttl Cache TTL in seconds. Default HOUR_IN_SECONDS.
 		 */
 		$ttl = apply_filters( 'react_reaction_count_cache_ttl', HOUR_IN_SECONDS );
 
-		wp_cache_set( $post_id, $count, $cache_group, $ttl );
+		wp_cache_set( $cache_key, $summary, $cache_group, $ttl );
 
-		return $count;
+		return $summary;
 	}
 
 	/**
-	 * Get the cache group the per-post reaction count is stored under.
+	 * Get the cache group a post's reaction tallies are stored under.
 	 *
-	 * Used consistently by get_reaction_count() (get + set) and
-	 * invalidate_reaction_count_cache() (delete), so all three stay in
-	 * sync if this is filtered.
+	 * Used consistently by get_reaction_summary() (get + set) and
+	 * invalidate_reaction_count_cache() (delete), so they stay in sync if
+	 * this is filtered.
 	 *
 	 * @return string The cache group name.
 	 */
@@ -372,7 +402,7 @@ class React {
 
 		$post_id = (int) $comment->comment_post_ID;
 
-		wp_cache_delete( $post_id, $this->get_reaction_count_cache_group() );
+		wp_cache_delete( 'summary-' . $post_id, $this->get_reaction_count_cache_group() );
 
 		/**
 		 * Fires after a post's cached reaction count has been invalidated.
@@ -410,6 +440,18 @@ class React {
 		}
 
 		$this->invalidate_reaction_count_cache( $comment_id, $comment );
+	}
+
+	/**
+	 * Invalidate a post's cached reaction tallies when a reaction is edited.
+	 *
+	 * The cache holds each reaction's value, not just a total, so changing a
+	 * reaction comment's content in wp-admin has to clear it too.
+	 *
+	 * @param int $comment_id The edited comment's ID.
+	 */
+	public function invalidate_reaction_count_cache_on_edit( $comment_id ) {
+		$this->invalidate_reaction_count_cache_on_delete( $comment_id );
 	}
 
 	/**
