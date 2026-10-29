@@ -9,7 +9,7 @@
 set -euo pipefail
 
 stage="$(mktemp -d)"
-trap 'rm -rf "$stage"; rm -f react.zip' EXIT
+trap 'rm -rf "$stage"' EXIT
 
 excludes=(--exclude=.git/ --exclude=.github/ --exclude=node_modules/ --exclude=.distignore)
 while IFS= read -r line; do
@@ -20,9 +20,13 @@ done < .distignore
 rsync -rc "${excludes[@]}" ./ "$stage/svn/"
 ( cd "$stage/svn" && find . -type f | sed 's#^\./##' | sort ) > "$stage/svn.txt"
 
-npx wp-scripts plugin-zip > /dev/null
+# plugin-zip writes <name>.zip into the directory it runs in, so build from a
+# copy rather than risk clobbering a react.zip someone already has here.
+rsync -r --exclude=.git --exclude=node_modules/ ./ "$stage/zip/"
+ln -s "$PWD/node_modules" "$stage/zip/node_modules"
+( cd "$stage/zip" && npx wp-scripts plugin-zip > /dev/null )
 # npm-packlist always adds package.json and README.md; they're harmless in a ZIP.
-unzip -Z1 react.zip | grep -v '/$' | sed 's#^react/##' \
+unzip -Z1 "$stage/zip/react.zip" | grep -v '/$' | sed 's#^react/##' \
 	| grep -vxE 'package\.json|README\.md' | sort > "$stage/zip.txt"
 
 status=0
