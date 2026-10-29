@@ -443,4 +443,36 @@ class WP_Test_REST_Reactions_Controller extends WP_Test_REST_Controller_Testcase
 		$this->assertCount( 1, $data );
 		$this->assertSame( 1, $data[0]['count'] );
 	}
+
+	public function test_get_items_reports_the_full_total_for_a_paginated_query() {
+		$post_id = $this->factory->post->create();
+
+		foreach ( array( '😀', '😀', '🎉' ) as $emoji ) {
+			$this->factory->comment->create(
+				array(
+					'comment_post_ID'  => $post_id,
+					'comment_type'     => 'reaction',
+					'comment_content'  => $emoji,
+					'comment_approved' => 1,
+				)
+			);
+		}
+
+		$paginate = function ( $args ) {
+			$args['number']        = 1;
+			$args['no_found_rows'] = false;
+			return $args;
+		};
+		add_filter( 'rest_reaction_query', $paginate );
+
+		$request = new WP_REST_Request( 'GET', '/wp/v2/react' );
+		$request->set_param( 'post', array( $post_id ) );
+		$response = $this->server->dispatch( $request );
+
+		remove_filter( 'rest_reaction_query', $paginate );
+
+		$headers = $response->get_headers();
+		$this->assertCount( 1, $response->get_data() );
+		$this->assertSame( 3, $headers['X-WP-Total'] );
+	}
 }

@@ -106,13 +106,17 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 		 */
 		$prepared_args = apply_filters( 'rest_reaction_query', $prepared_args, $request );
 
+		// Only set when a filtered query paginates; see tally_reaction_query().
+		$found_reactions = 0;
+
 		if ( $post_ids && $prepared_args === $default_args ) {
+			$react     = React::init();
 			$summaries = array();
 			foreach ( $post_ids as $post_id ) {
-				$summaries[ $post_id ] = React::init()->get_reaction_summary( $post_id );
+				$summaries[ $post_id ] = $react->get_reaction_summary( $post_id );
 			}
 		} else {
-			$summaries = $this->tally_reaction_query( $prepared_args );
+			$summaries = $this->tally_reaction_query( $prepared_args, $found_reactions );
 		}
 
 		$reactions       = array();
@@ -133,6 +137,12 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 		}
 
 		$reaction_groups = count( $reactions );
+
+		// A paginated query's tallies only cover the current page, so its
+		// total has to come from the query's own count of matching rows.
+		if ( $found_reactions ) {
+			$total_reactions = $found_reactions;
+		}
 
 		$response = rest_ensure_response( $reactions );
 		$response->header( 'X-WP-Total', $total_reactions );
@@ -257,10 +267,15 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 	 * arguments, since React::get_reaction_summary()'s aggregate query can't
 	 * honour arbitrary WP_Comment_Query arguments.
 	 *
-	 * @param  array $args WP_Comment_Query arguments.
+	 * @param  array $args  WP_Comment_Query arguments.
+	 * @param  int   $found Set to the query's found_comments: the number of
+	 *                      matching reactions across every page, which
+	 *                      WP_Comment_Query only computes when the arguments
+	 *                      paginate (`number` set, `no_found_rows` false), and
+	 *                      leaves at 0 otherwise.
 	 * @return array[] Reaction counts keyed by post ID, then by reaction.
 	 */
-	protected function tally_reaction_query( $args ) {
+	protected function tally_reaction_query( $args, &$found = 0 ) {
 		$query     = new WP_Comment_Query();
 		$summaries = array();
 
@@ -274,6 +289,8 @@ class WP_REST_React_Controller extends WP_REST_Controller {
 
 			++$summaries[ $post_id ][ $emoji ];
 		}
+
+		$found = (int) $query->found_comments;
 
 		return $summaries;
 	}
