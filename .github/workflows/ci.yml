@@ -93,3 +93,6 @@ jobs:
 
       - name: Verify the committed build output is up to date
         run: git diff --exit-code -- static/react.js static/react-admin.js static/emoji-data.json
+
+      - name: Verify the distributed plugin
+        run: bash tools/check-dist.sh

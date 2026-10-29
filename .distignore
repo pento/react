@@ -1,0 +1,28 @@
+# Excluded from the WordPress.org SVN deploy (the deploy also always skips
+# .git/, .github/, node_modules/ and this file). Leading slashes anchor each
+# pattern to the plugin root. Keep in step with "files" in package.json, which
+# is what the GitHub release ZIP is built from instead.
+# In a submodule or worktree .git is a file, which the deploy's own
+# --exclude=.git/ (directories only) doesn't match.
+/.git
+/.editorconfig
+/.gitignore
+/.stylelintrc.json
+/.wordpress-org
+/AGENTS.md
+/README.md
+/SECURITY.md
+/bin
+/blueprint.json
+/composer.json
+/composer.lock
+/package.json
+/package-lock.json
+/phpcs.xml
+/phpunit.xml
+/src
+/tests
+/tools
+/vendor
+/webpack.config.js
+/*.zip
