@@ -47,7 +47,7 @@ npm run lint:js        # eslint only (source only -- static/*.js is bundled outp
 npm run format          # wp-scripts format (prettier) on static/*.css, src/*.js
 ```
 
-Both `composer lint:php` and `npm run lint` should pass cleanly on `master` — treat a failure as something to fix, not pre-existing noise to ignore. Known caveat: `npm run format` and `npm run lint` currently disagree about blank-line placement inside `@media` blocks in `static/react.css` (see issue #23) — don't run `format` against that file unattended.
+Both `composer lint:php` and `npm run lint` should pass cleanly on `master` — treat a failure as something to fix, not pre-existing noise to ignore. `npm run format` and `npm run lint` used to disagree about the blank line after an `@media` brace ([issue #23](https://github.com/pento/react/issues/23)); `.stylelintrc.json` exists to reconcile them, so `format` is safe to run — keep that override if you touch the stylelint config.
 
 ## Running tests
 
