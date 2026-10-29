@@ -35,16 +35,37 @@ class React {
 		add_action( 'delete_comment', array( $this, 'invalidate_reaction_count_cache_on_delete' ), 10, 1 );
 		add_action( 'transition_comment_status', array( $this, 'invalidate_reaction_count_cache_on_status_change' ), 10, 3 );
 
+		// Registered before the is_admin() bail, so reactions stay out of
+		// wp-admin's Comments screen, the dashboard's Activity widget and the
+		// posts list's comment bubbles as well as the front end.
+		add_filter( 'comments_clauses', array( $this, 'exclude_reactions_from_comments_clauses' ), 10, 2 );
+		add_filter( 'get_comments_number', array( $this, 'exclude_reactions_from_comments_number' ), 10, 2 );
+
 		if ( is_admin() ) {
+			add_filter( 'admin_comment_types_dropdown', array( $this, 'add_reaction_comment_type' ) );
 			return;
 		}
 
 		$this->enqueue();
 
 		add_filter( 'the_content', array( $this, 'the_content' ) );
+	}
 
-		add_filter( 'comments_clauses', array( $this, 'exclude_reactions_from_comments_clauses' ), 10, 2 );
-		add_filter( 'get_comments_number', array( $this, 'exclude_reactions_from_comments_number' ), 10, 2 );
+	/**
+	 * Offer reactions in the Comments screen's comment type dropdown.
+	 *
+	 * They're hidden from that screen's default listing by
+	 * exclude_reactions_from_comments_clauses(), and this is how a site owner
+	 * gets them back -- e.g. to moderate or delete one. Choosing it requests
+	 * comment_type=reaction, which that filter leaves untouched.
+	 *
+	 * @param array $comment_types Comment type labels, keyed by type.
+	 * @return array Filtered comment types.
+	 */
+	public function add_reaction_comment_type( $comment_types ) {
+		$comment_types[ self::COMMENT_TYPE ] = __( 'Reactions', 'react' );
+
+		return $comment_types;
 	}
 
 	/**
@@ -374,7 +395,7 @@ class React {
 	 * Hooks 'delete_comment' rather than 'deleted_comment': the latter's
 	 * $comment parameter was only added in WP 4.9.0, and by the time it
 	 * fires the comment row is already gone, so there'd be no way to look
-	 * up its type/post on an older install. This plugin supports WP 4.4+,
+	 * up its type/post on an older install. This plugin supports WP 4.7+,
 	 * and 'delete_comment' fires before removal on every supported version,
 	 * with only the comment ID guaranteed -- so look the comment up from
 	 * that while it still exists.

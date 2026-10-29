@@ -198,6 +198,60 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		$this->assertCount( 1, $comments );
 	}
 
+	public function test_reactions_excluded_from_admin_comment_queries() {
+		set_current_screen( 'edit-comments' );
+
+		// React::init()'s singleton was built outside wp-admin, so build one
+		// that sees is_admin() -- WP_UnitTestCase restores hooks afterwards.
+		$react = new React();
+
+		$this->assertSame( 10, has_filter( 'comments_clauses', array( $react, 'exclude_reactions_from_comments_clauses' ) ) );
+		$this->assertSame( 10, has_filter( 'get_comments_number', array( $react, 'exclude_reactions_from_comments_number' ) ) );
+		$this->assertFalse( has_filter( 'the_content', array( $react, 'the_content' ) ) );
+
+		$post_id = $this->factory->post->create();
+
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_approved' => 1,
+			)
+		);
+		$this->factory->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_type'     => 'reaction',
+				'comment_approved' => 1,
+			)
+		);
+
+		// The same args WP_Comments_List_Table passes for "All comment types".
+		$this->assertCount(
+			1,
+			get_comments(
+				array(
+					'post_id' => $post_id,
+					'type'    => '',
+				)
+			)
+		);
+
+		// ...and for the Reactions entry this adds to its type dropdown.
+		$types = apply_filters( 'admin_comment_types_dropdown', array() );
+		$this->assertArrayHasKey( 'reaction', $types );
+		$this->assertCount(
+			1,
+			get_comments(
+				array(
+					'post_id' => $post_id,
+					'type'    => 'reaction',
+				)
+			)
+		);
+
+		set_current_screen( 'front' );
+	}
+
 	/**
 	 * Test that reactions don't inflate the post's displayed comment count.
 	 *

@@ -10,7 +10,7 @@ A small WordPress plugin (`react.php`) that lets visitors react to posts with an
 
 - `react.php` — plugin bootstrap. Defines `REACT_URL`/`REACT_VERSION`, loads the three classes below, hooks `React::init()` on `init`, and calls `React_Settings::bootstrap()`. That bootstrap deliberately happens here rather than from `React::__construct()`: the constructor itself runs on `init`, and adding an `init` callback from inside one at the same priority is silently dropped, because `WP_Hook` iterates a copy of its callback array.
 - `lib/class-wp-rest-react-controller.php` — `WP_REST_React_Controller`, the REST controller for the `/wp/v2/react` route (`GET` to list/tally reactions, `POST` to add one). Validates submitted reactions against `static/emoji-data.json` (see below) and the registered custom icons.
-- `lib/class-react.php` — `React`, the front-end integration: enqueues assets, injects settings, filters `the_content()` to append the reaction summary + "add reaction" button.
+- `lib/class-react.php` — `React`, the front-end integration: enqueues assets, injects settings, filters `the_content()` to append the reaction summary + "add reaction" button, and keeps reactions out of every comment query that doesn't ask for them by type (front end and wp-admin alike).
 - `lib/class-react-settings.php` — `React_Settings`, the **Reactions** section on Settings > Discussion: the settings and their sanitizers, the custom-icon uploader, registration of icons with WordPress 7.1's Icon Registration API, and the `is_known_reaction()` / `is_offerable_reaction()` predicates the controller and front end both use.
 - `src/react.js` — the JS source: imports `emoji-picker-element`, handles click interactions (opening the picker, reacting to an existing bubble), and the XHR to the REST endpoint. Bundled by webpack (`webpack.config.js`, a customized `@wordpress/scripts` config) into `static/react.js` — evergreen browsers only, no legacy-IE fallback paths.
 - `src/react-admin.js` — the JS source for the settings screen: the `<emoji-picker>` used to add default reactions, and the remove buttons. A separate webpack entry (`static/react-admin.js`) rather than a reuse of `static/react.js`, which installs a document-level click handler that posts reactions and has no business running in wp-admin. The cost is that `emoji-picker-element` is bundled twice; the two bundles never load on the same request.
@@ -47,7 +47,7 @@ npm run lint:js        # eslint only (source only -- static/*.js is bundled outp
 npm run format          # wp-scripts format (prettier) on static/*.css, src/*.js
 ```
 
-Both `composer lint:php` and `npm run lint` should pass cleanly on `master` — treat a failure as something to fix, not pre-existing noise to ignore. Known caveat: `npm run format` and `npm run lint` currently disagree about blank-line placement inside `@media` blocks in `static/react.css` (see issue #23) — don't run `format` against that file unattended.
+Both `composer lint:php` and `npm run lint` should pass cleanly on `master` — treat a failure as something to fix, not pre-existing noise to ignore. `npm run format` and `npm run lint` used to disagree about the blank line after an `@media` brace ([issue #23](https://github.com/pento/react/issues/23)); `.stylelintrc.json` exists to reconcile them, so `format` is safe to run — keep that override if you touch the stylelint config.
 
 ## Running tests
 
@@ -57,6 +57,8 @@ Tests need a real WordPress test-suite checkout, which isn't installed by `compo
 bin/install-wp-tests.sh <db-name> <db-user> <db-pass> [db-host] [wp-version]
 vendor/bin/phpunit
 ```
+
+`latest` is resolved to a concrete release, and the test includes are checked out from that release's tag rather than trunk -- trunk's includes routinely reference classes no release has yet, and fatal the bootstrap against a released core (that's what an `Interface "..." not found` error from the bootstrap means). If `/tmp/wordpress` already holds a different core version, point the script somewhere else with `WP_CORE_DIR=/path/to/wordpress/`.
 
 `tests/bootstrap.php` reads `WP_TESTS_DIR` (defaults to `/tmp/wordpress-tests-lib`) and loads the plugin via `_manually_load_react_plugin()`. If that environment isn't available, say so explicitly rather than claiming test coverage you didn't actually verify — `php -l` and `composer lint:php`/`npm run lint` are not a substitute for actually running the suite.
 

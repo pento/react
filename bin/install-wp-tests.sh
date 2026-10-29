@@ -12,16 +12,31 @@ DB_HOST=${4-localhost}
 WP_VERSION=${5-latest}
 
 WP_TESTS_DIR=${WP_TESTS_DIR-/tmp/wordpress-tests-lib}
-WP_CORE_DIR=/tmp/wordpress/
+WP_CORE_DIR=${WP_CORE_DIR-/tmp/wordpress/}
 
 set -ex
+
+# The test includes have to come from the same version as core: trunk's
+# routinely reference classes that no release has yet, which fatals the
+# bootstrap. So resolve 'latest' to a real version number and use its tag.
+if [[ $WP_VERSION == 'nightly' || $WP_VERSION == 'trunk' ]]; then
+	WP_TESTS_TAG="trunk"
+else
+	if [[ $WP_VERSION == 'latest' ]]; then
+		# wget, like every other download here. The first offer is the latest release.
+		WP_VERSION=$(wget -qO- https://api.wordpress.org/core/version-check/1.7/ | grep -o '"version":"[^"]*"' | head -1 | cut -d'"' -f4)
+		if [[ -z $WP_VERSION ]]; then
+			echo "Couldn't determine the latest WordPress version."
+			exit 1
+		fi
+	fi
+	WP_TESTS_TAG="tags/$WP_VERSION"
+fi
 
 install_wp() {
 	mkdir -p $WP_CORE_DIR
 
-	if [ $WP_VERSION == 'latest' ]; then
-		local ARCHIVE_NAME='latest'
-	elif [ $WP_VERSION == 'nightly' ]; then
+	if [[ $WP_VERSION == 'nightly' || $WP_VERSION == 'trunk' ]]; then
 		local ARCHIVE_NAME='nightly-builds/wordpress-latest'
 	else
 		local ARCHIVE_NAME="wordpress-$WP_VERSION"
@@ -49,9 +64,10 @@ install_test_suite() {
 	# set up testing suite
 	mkdir -p $WP_TESTS_DIR
 	cd $WP_TESTS_DIR
-	svn co --quiet https://develop.svn.wordpress.org/trunk/tests/phpunit/includes/
+	svn co --quiet https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/includes/
+	svn co --quiet https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/data/
 
-	wget -nv -O wp-tests-config.php https://develop.svn.wordpress.org/trunk/wp-tests-config-sample.php
+	wget -nv -O wp-tests-config.php https://develop.svn.wordpress.org/${WP_TESTS_TAG}/wp-tests-config-sample.php
 	sed $ioption "s:dirname( __FILE__ ) . '/src/':'$WP_CORE_DIR':" wp-tests-config.php
 	sed $ioption "s/youremptytestdbnamehere/$DB_NAME/" wp-tests-config.php
 	sed $ioption "s/yourusernamehere/$DB_USER/" wp-tests-config.php
