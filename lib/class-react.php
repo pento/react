@@ -382,7 +382,7 @@ class React {
 	 */
 	private function get_reaction_count_cache_group() {
 		/**
-		 * Filters the cache group the per-post reaction count is stored under.
+		 * Filters the cache group each post's reaction tallies are stored under.
 		 *
 		 * @param string $cache_group Cache group name. Default 'react_reaction_counts'.
 		 */
@@ -390,7 +390,7 @@ class React {
 	}
 
 	/**
-	 * Invalidate the cached reaction count for a post when a reaction is added.
+	 * Invalidate a post's cached reaction tallies when a reaction is added.
 	 *
 	 * @param int        $id      The comment ID.
 	 * @param WP_Comment $comment The comment object.
@@ -405,22 +405,24 @@ class React {
 		wp_cache_delete( 'summary-' . $post_id, $this->get_reaction_count_cache_group() );
 
 		/**
-		 * Fires after a post's cached reaction count has been invalidated.
+		 * Fires after a post's cached reaction tallies have been invalidated.
 		 *
 		 * Fires once per invalidation trigger: a reaction comment being
-		 * inserted, deleted, or changing status (e.g. trashed, spammed, or
-		 * un/approved) -- see invalidate_reaction_count_cache_on_delete()
-		 * and invalidate_reaction_count_cache_on_status_change(), which both
-		 * call this method.
+		 * inserted, edited, deleted, or changing status (e.g. trashed,
+		 * spammed, or un/approved) -- see
+		 * invalidate_reaction_count_cache_on_delete(),
+		 * invalidate_reaction_count_cache_on_edit() and
+		 * invalidate_reaction_count_cache_on_status_change(), which all call
+		 * this method.
 		 *
-		 * @param int $post_id The post whose cached count was invalidated.
+		 * @param int $post_id The post whose cached tallies were invalidated.
 		 */
 		do_action( 'react_reaction_count_invalidated', $post_id );
 	}
 
 	/**
-	 * Invalidate the cached reaction count for a post when a reaction is
-	 * about to be deleted.
+	 * Invalidate a post's cached reaction tallies when a reaction is about to
+	 * be deleted.
 	 *
 	 * Hooks 'delete_comment' rather than 'deleted_comment': the latter's
 	 * $comment parameter was only added in WP 4.9.0, and by the time it
@@ -455,8 +457,8 @@ class React {
 	}
 
 	/**
-	 * Invalidate the cached reaction count for a post when a reaction's
-	 * comment status changes -- e.g. approved, unapproved, spammed, or
+	 * Invalidate a post's cached reaction tallies when a reaction's comment
+	 * status changes -- e.g. approved, unapproved, spammed, or
 	 * trashed, including via bulk moderation actions in wp-admin.
 	 *
 	 * @param string     $new_status The new comment status.
