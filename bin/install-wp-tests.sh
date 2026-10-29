@@ -23,7 +23,8 @@ if [[ $WP_VERSION == 'nightly' || $WP_VERSION == 'trunk' ]]; then
 	WP_TESTS_TAG="trunk"
 else
 	if [[ $WP_VERSION == 'latest' ]]; then
-		WP_VERSION=$(curl -s https://api.wordpress.org/core/version-check/1.7/ | grep -o '"version":"[^"]*"' | head -1 | cut -d'"' -f4)
+		# wget, like every other download here. The first offer is the latest release.
+		WP_VERSION=$(wget -qO- https://api.wordpress.org/core/version-check/1.7/ | grep -o '"version":"[^"]*"' | head -1 | cut -d'"' -f4)
 		if [[ -z $WP_VERSION ]]; then
 			echo "Couldn't determine the latest WordPress version."
 			exit 1
