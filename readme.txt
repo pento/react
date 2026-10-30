@@ -1,4 +1,4 @@
-=== Reactions ===
+=== Reactions – Emoji Reactions for Posts ===
 Contributors: pento, georgestephanis
 Tags: emoji, reactions, comments, likes, engagement
 Requires at least: 4.7
