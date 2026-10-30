@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256"><title>Reactions</title>
+<path d="M60 44h124c17.7 0 32 14.3 32 32v84c0 17.7-14.3 32-32 32h-58l-42 34v-34H60c-17.7 0-32-14.3-32-32V76c0-17.7 14.3-32 32-32Z" fill="#FFF4E6"></path>
+<circle cx="122" cy="118" r="54" fill="#FFC23D"></circle>
+<circle cx="103" cy="105" r="8" fill="#241C35"></circle>
+<circle cx="141" cy="105" r="8" fill="#241C35"></circle>
+<path d="M94 128c7 14 16.5 21 28 21s21-7 28-21" fill="none" stroke="#241C35" stroke-width="9" stroke-linecap="round"></path>
+<circle cx="206" cy="56" r="36" fill="#241C35"></circle>
+<path d="M206 38v36M188 56h36" stroke="#FFF4E6" stroke-width="10" stroke-linecap="round"></path>
+</svg>
