@@ -77,6 +77,12 @@ No IP address or browser user agent is stored. The emoji data is served from you
 
 Development happens at https://github.com/pento/react.
 
+== Screenshots ==
+
+1. Reactions under a post, with the button to add one.
+2. Picking any emoji with the built-in picker.
+3. The Reactions settings in Settings > Discussion.
+
 == Changelog ==
 
 = 0.2.0 =
