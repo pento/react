@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: React
+ * Plugin Name: Reactions – Emoji Reactions for Posts
  * Description: 💩 Reactions.
  * Version: 0.2.0
  * Requires at least: 4.7
