@@ -4,7 +4,7 @@ Tags: emoji, reactions, comments
 Requires at least: 4.7
 Tested up to: 7.1
 Requires PHP: 7.0
-Stable tag: trunk
+Stable tag: 0.2.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -90,7 +90,7 @@ Development happens at https://github.com/pento/react.
 
 == Changelog ==
 
-= Unreleased =
+= 0.2.0 =
 
 * Reaction tallies are now counted by the database and cached per post, instead of every
   reaction on a post being loaded on each page view. Both the reactions under a post and the
