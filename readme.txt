@@ -1,6 +1,6 @@
 === Reactions ===
 Contributors: pento, georgestephanis
-Tags: emoji, reactions, comments
+Tags: emoji, reactions, comments, likes, engagement
 Requires at least: 4.7
 Tested up to: 7.1
 Requires PHP: 7.0
@@ -84,6 +84,19 @@ explanation. Flatten your artwork to filled paths in your vector editor first.
 Your file is never added to your media library, and SVG uploads stay disabled site-wide -- only
 the sanitized icon markup is kept.
 
+= What does the plugin store about the people who react? =
+
+Each reaction is a comment, so it records the post, the emoji and the time.
+
+* **Logged-in users:** the reaction is linked to their account, and their display name, email
+  address and website are copied onto it, just as they would be for an ordinary comment.
+* **Logged-out visitors:** nothing that identifies them. Their browser generates a random ID,
+  kept in `localStorage` and saved with the reaction so they can undo it later. It's only sent
+  with a reaction, and isn't a cookie.
+
+No IP address or browser user agent is stored. The emoji data is served from your own site, so
+the plugin makes no requests to third-party services.
+
 = Where can I report a bug or contribute? =
 
 Development happens at https://github.com/pento/react.
@@ -117,8 +130,6 @@ Development happens at https://github.com/pento/react.
 * Adds the ability to remove a reaction by reacting again with the same emoji (a toggle), for
   both logged-in users and logged-out visitors (via a per-browser identifier kept in
   `localStorage`, never sent except with a reaction request).
-* Adds a GitHub Actions CI workflow (PHPUnit across PHP 8.1-8.3, phpcs, JS lint/tests on every
-  push/PR) and a new JS test suite.
 * Fixes WP 7.1 / PHP 8.5 compatibility issues.
 * Fixes a stored-XSS vector where unescaped reaction comment content could be rendered on the
   front end.
@@ -131,9 +142,12 @@ Development happens at https://github.com/pento/react.
 * Adds `react_reaction_created`, `react_reaction_removed` and
   `react_reaction_count_invalidated` actions, and `react_reaction_markup`,
   `react_reaction_count_cache_group`, and `react_reaction_count_cache_ttl` filters.
-* Removes a committed, unused 683KB raw build artifact.
-* Adds a WordPress Playground blueprint for a one-click demo.
 
 = 0.1.0 =
 
 First release.
+
+== Upgrade Notice ==
+
+= 0.2.0 =
+Adds settings, custom icons and undoable reactions, and keeps reactions out of wp-admin's Comments. Removes the react_categories filter, so check any code that uses it.
