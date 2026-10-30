@@ -36,7 +36,9 @@ if ! diff -u --label svn "$stage/svn.txt" --label zip "$stage/zip.txt"; then
 	status=1
 fi
 
-for required in react.php readme.txt license.txt lib/class-react.php static/react.js static/react-admin.js static/emoji-data.json; do
+# Everything tracked under lib/ and static/ is runtime code or assets, so derive
+# the list rather than maintain it by hand and miss the next file added there.
+for required in react.php readme.txt license.txt $(git ls-files lib static); do
 	if ! grep -qxF "$required" "$stage/svn.txt"; then
 		echo "::error::$required is missing from the distributed plugin."
 		status=1
