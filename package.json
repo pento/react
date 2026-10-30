@@ -1,6 +1,5 @@
 {
 	"name": "react",
-	"version": "0.1.0",
 	"description": "💩 Reactions plugin.",
 	"private": true,
 	"scripts": {
@@ -18,5 +17,12 @@
 	},
 	"dependencies": {
 		"emoji-picker-element": "^1.29.1"
-	}
+	},
+	"files": [
+		"react.php",
+		"readme.txt",
+		"license.txt",
+		"lib/",
+		"static/"
+	]
 }

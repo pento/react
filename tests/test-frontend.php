@@ -81,6 +81,13 @@ class React_Test_Frontend extends WP_UnitTestCase {
 		$this->assertEquals( $content, $react->the_content( $content ) );
 	}
 
+	public function test_version_constant_matches_the_plugin_header() {
+		$header = get_file_data( dirname( __DIR__ ) . '/react.php', array( 'Version' => 'Version' ) );
+
+		$this->assertNotEmpty( $header['Version'] );
+		$this->assertSame( $header['Version'], REACT_VERSION );
+	}
+
 	/**
 	 * Test that the emoji-data.json URL is passed.
 	 */

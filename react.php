@@ -11,7 +11,10 @@
  */
 
 define( 'REACT_URL', plugins_url( '', __FILE__ ) );
-define( 'REACT_VERSION', '0.1' );
+// Read from the header rather than repeated here, so a release only has to
+// change one line -- and the deploy, which rewrites just the header, keeps the
+// asset cache-busting version in step with it.
+define( 'REACT_VERSION', get_file_data( __FILE__, array( 'Version' => 'Version' ) )['Version'] );
 
 /**
  * Loads the plugin.
