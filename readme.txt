@@ -69,7 +69,7 @@ Your file is never added to your media library, and SVG uploads stay disabled si
 Each reaction is a comment, so it records the post, the emoji and the time.
 
 * **Logged-in users:** the reaction is linked to their account, and their display name, email address and website are copied onto it, just as they would be for an ordinary comment.
-* **Logged-out visitors:** nothing that identifies them. Their browser generates a random ID, kept in `localStorage` and saved with the reaction so they can undo it later. It's only sent with a reaction, and isn't a cookie.
+* **Logged-out visitors:** no name, email or account. Their browser generates a random ID, kept in `localStorage` and saved with the reaction so they can undo it later. It isn't linked to anything else about them, is only sent with a reaction, and isn't a cookie.
 
 No IP address or browser user agent is stored. The emoji data is served from your own site, so the plugin makes no requests to third-party services.
 
